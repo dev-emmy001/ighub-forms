@@ -101,3 +101,47 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+
+// GET: Retrieve all forms with registration counts
+export async function GET(req: Request) {
+    try {
+        // 1. Fetch all forms
+        const { data: forms, error: formsError } = await supabaseAdmin
+            .from('forms')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (formsError) {
+            console.error('Supabase fetch forms error:', formsError);
+            return NextResponse.json({ error: 'Failed to retrieve forms' }, { status: 500 });
+        }
+
+        // 2. Fetch all submissions to map registration counts
+        const { data: submissions, error: submissionsError } = await supabaseAdmin
+            .from('submissions')
+            .select('form_id');
+
+        if (submissionsError) {
+            console.error('Supabase fetch submissions error:', submissionsError);
+            return NextResponse.json({ error: 'Failed to count submissions' }, { status: 500 });
+        }
+
+        // 3. Map counts
+        const counts: Record<string, number> = {};
+        submissions?.forEach((sub: any) => {
+            counts[sub.form_id] = (counts[sub.form_id] || 0) + 1;
+        });
+
+        // 4. Combine
+        const result = (forms || []).map((f: any) => ({
+            ...f,
+            submissions_count: counts[f.id] || 0,
+        }));
+
+        return NextResponse.json(result, { status: 200 });
+
+    } catch (error) {
+        console.error('API Forms GET Error:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}

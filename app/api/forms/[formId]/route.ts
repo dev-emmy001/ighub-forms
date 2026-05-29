@@ -40,6 +40,22 @@ export async function PUT(req: Request, { params }: { params: Promise<{ formId: 
     try {
         const { formId } = await params;
         const body = await req.json();
+
+        // Support quick active status toggle
+        if (body.toggle_active !== undefined) {
+            const { data, error } = await supabaseAdmin
+                .from('forms')
+                .update({ is_active: !!body.toggle_active })
+                .eq('id', formId)
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Supabase toggle error:', error);
+                return NextResponse.json({ error: 'Failed to toggle form status' }, { status: 500 });
+            }
+            return NextResponse.json({ success: true, form: data }, { status: 200 });
+        }
         
         const {
             title,

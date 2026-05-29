@@ -34,11 +34,20 @@ export default async function DynamicFormPage({ params }: { params: Promise<{ sl
     }
 
     return (
-        <main className="min-h-screen bg-ighub-light py-16 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-2xl mx-auto space-y-8">
+        <main className="min-h-screen bg-ighub-light pb-24 relative flex flex-col">
+            {/* Sticky Countdown Timer fixed to the top of the viewport */}
+            {formConfig.closes_at && (
+                <div className="sticky top-0 z-50 w-full bg-white/75  py-4 px-4 sm:px-6 lg:px-8 flex justify-center shrink-0">
+                    <div className="w-full max-w-2xl">
+                        <CountdownTimer targetDate={formConfig.closes_at} />
+                    </div>
+                </div>
+            )}
+
+            <div className="max-w-2xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-12 space-y-8 flex-1">
                 {/* Header Section */}
                 <div className="text-center mb-4">
-                    <h1 className="text-4xl font-extrabold text-ighub-black tracking-tight mb-4">
+                    <h1 className="text-4xl font-bold text-ighub-black tracking-tight mb-4">
                         {formConfig.title}
                     </h1>
                     {formConfig.description && (
@@ -47,13 +56,6 @@ export default async function DynamicFormPage({ params }: { params: Promise<{ sl
                         </p>
                     )}
                 </div>
-
-                {/* Countdown Timer */}
-                {formConfig.closes_at && (
-                    <div className="w-full">
-                        <CountdownTimer targetDate={formConfig.closes_at} />
-                    </div>
-                )}
 
                 {/* The Form Engine Component */}
                 <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">

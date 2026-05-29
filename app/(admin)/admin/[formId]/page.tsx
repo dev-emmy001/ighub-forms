@@ -20,7 +20,16 @@ import {
     ArrowLeft,
     Settings,
     Layers,
-    Save
+    Save,
+    Users,
+    Share2,
+    Download,
+    Search,
+    Copy,
+    Calendar,
+    ChevronDown,
+    ChevronUp,
+    ExternalLink
 } from "lucide-react";
 
 interface FormField {
@@ -41,12 +50,33 @@ interface EventMetadata {
     closes_at: string;
 }
 
+interface Submission {
+    id: string;
+    submitter_email: string;
+    answers: Record<string, any>;
+    staff_ref: string | null;
+    payment_status: string;
+    created_at: string;
+}
+
+interface Promoter {
+    id: string;
+    name: string;
+    code: string;
+    form_id: string;
+    referral_count: number;
+    created_at: string;
+}
+
 export default function EditFormPage({ params: paramsPromise }: { params: Promise<{ formId: string }> }) {
     const params = use(paramsPromise);
     const { formId } = params;
     const router = useRouter();
 
-    // 1. States
+    // 1. Tabs state
+    const [activeTab, setActiveTab] = useState<"editor" | "submissions" | "referrals">("editor");
+
+    // 2. Editor state
     const [metadata, setMetadata] = useState<EventMetadata>({
         title: "",
         slug: "",
@@ -56,10 +86,23 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
         discount_price: "0",
         closes_at: "",
     });
-
     const [fields, setFields] = useState<FormField[]>([]);
-    
-    // UI state
+
+    // 3. Submissions state
+    const [submissions, setSubmissions] = useState<Submission[]>([]);
+    const [submissionsSearch, setSubmissionsSearch] = useState("");
+    const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
+    const [isSubmissionsLoading, setIsSubmissionsLoading] = useState(false);
+
+    // 4. Referrals state
+    const [promoters, setPromoters] = useState<Promoter[]>([]);
+    const [newPromoterName, setNewPromoterName] = useState("");
+    const [newPromoterCode, setNewPromoterCode] = useState("");
+    const [isPromotersLoading, setIsPromotersLoading] = useState(false);
+    const [promoterSubmitError, setPromoterSubmitError] = useState<string | null>(null);
+    const [copiedPromoterId, setCopiedPromoterId] = useState<string | null>(null);
+
+    // 5. Global loading & status
     const [isLoading, setIsLoading] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
     const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
@@ -86,7 +129,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
         return `${year}-${month}-${day}T${hours}:${minutes}`;
     };
 
-    // 2. Fetch Form Data on Mount
+    // 6. Fetch Form Configuration on Mount
     useEffect(() => {
         const fetchFormData = async () => {
             try {
@@ -121,7 +164,132 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
         }
     }, [formId]);
 
-    // Generate unique ID safely
+    // 7. Load Tab Data dynamically
+    useEffect(() => {
+        if (activeTab === "submissions") {
+            loadSubmissions();
+        } else if (activeTab === "referrals") {
+            loadPromoters();
+        }
+    }, [activeTab]);
+
+    const loadSubmissions = async () => {
+        setIsSubmissionsLoading(true);
+        try {
+            const res = await fetch(`/api/submissions/${formId}`);
+            if (!res.ok) {
+                throw new Error("Failed to load submissions list.");
+            }
+            const data = await res.json();
+            setSubmissions(data || []);
+        } catch (err: any) {
+            console.error(err);
+        } finally {
+            setIsSubmissionsLoading(false);
+        }
+    };
+
+    const loadPromoters = async () => {
+        setIsPromotersLoading(true);
+        try {
+            const res = await fetch(`/api/promoters?formId=${formId}`);
+            if (!res.ok) {
+                throw new Error("Failed to load promoters list.");
+            }
+            const data = await res.json();
+            setPromoters(data || []);
+        } catch (err: any) {
+            console.error(err);
+        } finally {
+            setIsPromotersLoading(false);
+        }
+    };
+
+    // 8. Add Promoter Code Handler
+    const handleRegisterPromoter = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setPromoterSubmitError(null);
+
+        if (!newPromoterName.trim() || !newPromoterCode.trim()) {
+            setPromoterSubmitError("Name and tracking code are required.");
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/promoters", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name: newPromoterName,
+                    code: newPromoterCode,
+                    formId,
+                }),
+            });
+
+            const result = await res.json();
+            if (!res.ok) {
+                throw new Error(result.error || "Failed to register promoter.");
+            }
+
+            setNewPromoterName("");
+            setNewPromoterCode("");
+            loadPromoters(); // Reload promoters grid
+        } catch (err: any) {
+            console.error(err);
+            setPromoterSubmitError(err.message || "An error occurred.");
+        }
+    };
+
+    // 9. Copy Promoter tracked link
+    const handleCopyPromoterLink = (code: string, id: string) => {
+        if (typeof window === "undefined") return;
+        const origin = window.location.origin;
+        const url = `${origin}/${metadata.slug}?ref=${code.trim().toLowerCase()}`;
+        navigator.clipboard.writeText(url);
+        setCopiedPromoterId(id);
+        setTimeout(() => setCopiedPromoterId(null), 2000);
+    };
+
+    // 10. CSV Submissions Exporter
+    const handleExportCSV = () => {
+        if (submissions.length === 0) return;
+
+        // Headers: Email, Date, Status, Ref, and Form Question Labels
+        const dynamicHeaders = fields.map((f) => f.label);
+        const headers = ["Submitter Email", "Date Registered", "Payment Status", "Referral Code", ...dynamicHeaders];
+
+        const rows = submissions.map((sub) => {
+            const dateStr = new Date(sub.created_at).toLocaleDateString();
+            const answersObj = sub.answers || {};
+            const dynamicValues = fields.map((f) => {
+                const val = answersObj[f.id] || "";
+                return typeof val === "object" ? JSON.stringify(val) : String(val);
+            });
+
+            return [
+                sub.submitter_email,
+                dateStr,
+                sub.payment_status,
+                sub.staff_ref || "None",
+                ...dynamicValues
+            ].map((val) => `"${val.replace(/"/g, '""')}"`); // Escape quotes
+        });
+
+        const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `${metadata.slug}_submissions.csv`);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // 11. Form Fields Schema Handlers
     const generateId = () => {
         if (typeof window !== "undefined" && window.crypto && window.crypto.randomUUID) {
             return window.crypto.randomUUID();
@@ -129,39 +297,6 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
         return `field_${Math.random().toString(36).substring(2, 9)}`;
     };
 
-    // 3. Slug Auto-generation (if not manually overridden during this editing session)
-    useEffect(() => {
-        if (!isSlugManuallyEdited && metadata.title && !metadata.slug) {
-            const generatedSlug = metadata.title
-                .toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, "")
-                .replace(/\s+/g, "-")
-                .replace(/-+/g, "-")
-                .trim();
-            setMetadata((prev) => ({ ...prev, slug: generatedSlug }));
-        }
-    }, [metadata.title, isSlugManuallyEdited]);
-
-    // 4. Metadata Handlers
-    const handleMetadataChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => {
-        const { name, value } = e.target;
-        setMetadata((prev) => ({ ...prev, [name]: value }));
-
-        if (name === "slug") {
-            setIsSlugManuallyEdited(true);
-        }
-    };
-
-    const handlePaymentToggle = () => {
-        setMetadata((prev) => ({
-            ...prev,
-            requires_payment: !prev.requires_payment,
-        }));
-    };
-
-    // 5. Form Fields Schema Handlers
     const addField = () => {
         const newField: FormField = {
             id: generateId(),
@@ -192,7 +327,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
         );
     };
 
-    // 6. Select Field Options Handlers
+    // Select Field Option Operations
     const addOptionToField = (fieldId: string) => {
         setFields((prev) =>
             prev.map((f) => {
@@ -232,7 +367,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
         );
     };
 
-    // 7. Vertical Reordering (Strictly state-driven)
+    // Vertical Reordering
     const moveFieldUp = (index: number) => {
         if (index === 0) return;
         setFields((prev) => {
@@ -255,7 +390,38 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
         });
     };
 
-    // 8. Validation & PUT Save handler
+    // 12. Slug Auto-generation
+    useEffect(() => {
+        if (!isSlugManuallyEdited && metadata.title && !metadata.slug) {
+            const generatedSlug = metadata.title
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, "")
+                .replace(/\s+/g, "-")
+                .replace(/-+/g, "-")
+                .trim();
+            setMetadata((prev) => ({ ...prev, slug: generatedSlug }));
+        }
+    }, [metadata.title, isSlugManuallyEdited]);
+
+    // Metadata Handlers
+    const handleMetadataChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+        const { name, value } = e.target;
+        setMetadata((prev) => ({ ...prev, [name]: value }));
+
+        if (name === "slug") {
+            setIsSlugManuallyEdited(true);
+        }
+    };
+
+    const handlePaymentToggle = () => {
+        setMetadata((prev) => ({
+            ...prev,
+            requires_payment: !prev.requires_payment,
+        }));
+    };
+
     const validateForm = (): boolean => {
         const errors: string[] = [];
 
@@ -370,22 +536,35 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
         }
     };
 
-    // Render loading state
+    // Submissions Search filter
+    const filteredSubmissions = submissions.filter((sub) => {
+        const query = submissionsSearch.toLowerCase();
+        return (
+            sub.submitter_email.toLowerCase().includes(query) ||
+            (sub.staff_ref && sub.staff_ref.toLowerCase().includes(query)) ||
+            sub.payment_status.toLowerCase().includes(query)
+        );
+    });
+
+    const getLabelForFieldId = (id: string) => {
+        return fields.find((f) => f.id === id)?.label || id;
+    };
+
+    // Global loading and error check
     if (isLoading) {
         return (
             <main className="min-h-screen bg-ighub-light flex items-center justify-center">
                 <div className="text-center space-y-4">
                     <Loader2 className="w-10 h-10 animate-spin text-ighub-green mx-auto" />
-                    <p className="text-sm font-semibold text-gray-500">Loading form settings...</p>
+                    <p className="text-sm font-semibold text-gray-500 font-sans">Loading form settings...</p>
                 </div>
             </main>
         );
     }
 
-    // Render fetch error state
     if (fetchError) {
         return (
-            <main className="min-h-screen bg-ighub-light flex items-center justify-center p-6">
+            <main className="min-h-screen bg-ighub-light flex items-center justify-center p-6 font-sans">
                 <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-gray-100 shadow-xs text-center space-y-6">
                     <AlertCircle className="w-12 h-12 text-ighub-orange mx-auto" />
                     <div>
@@ -403,642 +582,821 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
     return (
         <main className="min-h-screen bg-ighub-light text-ighub-black flex flex-col font-sans">
             {/* Header Area */}
-            <header className="bg-white sticky top-0 z-30 px-6 py-3">
+            <header className="bg-white px-6 py-4 border-b border-gray-150 sticky top-0 z-30">
                 <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
+                        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                            <span className="text-ighub-purple">Admin Portal</span>
+                            <span>/</span>
+                            <span>{metadata.title || "Form Detail Hub"}</span>
+                        </div>
                         <h1 className="text-2xl font-bold tracking-tight text-ighub-black flex items-center gap-2">
-                            Edit Live Registration Form
+                            {metadata.title}
                         </h1>
                     </div>
-                    <div className="flex items-center gap-3">
+
+                    <div className="flex items-center gap-3 self-stretch sm:self-auto justify-between sm:justify-start">
+                        {/* Tab buttons */}
+                        <div className="flex bg-gray-150 p-1 rounded-xl text-xs font-bold uppercase tracking-wider">
+                            <button
+                                onClick={() => setActiveTab("editor")}
+                                className={`px-4 py-2 rounded-lg cursor-pointer transition-all ${
+                                    activeTab === "editor"
+                                        ? "bg-white text-ighub-purple shadow-3xs"
+                                        : "text-gray-500 hover:text-gray-700"
+                                }`}
+                            >
+                                Editor
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("submissions")}
+                                className={`px-4 py-2 rounded-lg cursor-pointer transition-all ${
+                                    activeTab === "submissions"
+                                        ? "bg-white text-ighub-purple shadow-3xs"
+                                        : "text-gray-500 hover:text-gray-700"
+                                }`}
+                            >
+                                Submissions
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("referrals")}
+                                className={`px-4 py-2 rounded-lg cursor-pointer transition-all ${
+                                    activeTab === "referrals"
+                                        ? "bg-white text-ighub-purple shadow-3xs"
+                                        : "text-gray-500 hover:text-gray-700"
+                                }`}
+                            >
+                                Referrals
+                            </button>
+                        </div>
+
                         <Button
                             variant="secondary"
                             onClick={() => router.push("/admin")}
-                            className="text-sm px-4 py-2 flex items-center gap-2 rounded-full cursor-pointer hover:bg-opacity-95"
+                            className="text-xs px-4 py-2 flex items-center gap-1.5 rounded-full cursor-pointer hover:bg-opacity-95 hidden md:flex shrink-0"
                         >
                             <ArrowLeft className="w-4 h-4" />
-                            Back to Console
+                            Console
                         </Button>
                     </div>
                 </div>
             </header>
 
-            {/* Main Content Workspace */}
-            <div className="flex-1 max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-5 gap-8">
+            {/* TAB INTERFACES */}
+            <div className="flex-1 max-w-7xl w-full mx-auto p-6">
                 
-                {/* LEFT COLUMN: EDITOR PANEL (3/5 width) */}
-                <div className="lg:col-span-3 space-y-8">
-                    
-                    {/* Status Alerts */}
-                    {submitStatus.success && (
-                        <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-950 flex flex-col gap-3 shadow-xs animate-in fade-in duration-300">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-emerald-500 text-white rounded-full">
-                                    <Check className="w-5 h-5" />
+                {/* 1. EDITOR TAB */}
+                {activeTab === "editor" && (
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                        {/* Left Editor */}
+                        <div className="lg:col-span-3 space-y-8">
+                            
+                            {submitStatus.success && (
+                                <div className="p-6 bg-emerald-50 border border-emerald-250 rounded-2xl text-emerald-950 flex flex-col gap-3 shadow-xs animate-in fade-in duration-300">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-emerald-500 text-white rounded-full">
+                                            <Check className="w-5 h-5" />
+                                        </div>
+                                        <h3 className="font-bold text-lg">Form Updated Successfully!</h3>
+                                    </div>
+                                    <p className="text-sm text-emerald-800">
+                                        {submitStatus.message}
+                                    </p>
+                                    <div className="flex gap-2 mt-2">
+                                        <a
+                                            href={`/${submitStatus.createdSlug}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="px-4 py-2 bg-ighub-green text-white hover:bg-ighub-orange transition-all duration-300 text-sm font-semibold rounded-full flex items-center gap-1 shadow-sm"
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                            View Live Form
+                                        </a>
+                                        <button
+                                            onClick={() => setSubmitStatus({})}
+                                            className="px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 text-sm font-semibold rounded-full cursor-pointer"
+                                        >
+                                            Keep Editing
+                                        </button>
+                                    </div>
                                 </div>
-                                <h3 className="font-bold text-lg">Form Updated Successfully!</h3>
-                            </div>
-                            <p className="text-sm text-emerald-800">
-                                {submitStatus.message}
-                            </p>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                <a
-                                    href={`/${submitStatus.createdSlug}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="px-4 py-2 bg-ighub-green text-white hover:bg-ighub-orange transition-all duration-300 text-sm font-semibold rounded-full flex items-center gap-1 shadow-sm"
+                            )}
+
+                            {submitStatus.success === false && (
+                                <div className="p-5 bg-rose-50 rounded-xl text-rose-950 flex gap-3 animate-in fade-in duration-300">
+                                    <AlertCircle className="w-6 h-6 text-ighub-orange shrink-0 mt-0.5" />
+                                    <div>
+                                        <h3 className="font-bold text-base">Error Saving Form</h3>
+                                        <p className="text-sm text-rose-800 mt-1">{submitStatus.message}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {validationErrors.length > 0 && (
+                                <div
+                                    id="validation-errors-alert"
+                                    className="p-5 bg-rose-50 border border-rose-200 rounded-xl text-rose-950 flex gap-3 shadow-xs scroll-mt-24 animate-in fade-in duration-300"
                                 >
-                                    <Eye className="w-4 h-4" />
-                                    View Live Form
-                                </a>
-                                <button
-                                    onClick={() => setSubmitStatus({})}
-                                    className="px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 text-sm font-semibold rounded-full cursor-pointer"
+                                    <AlertCircle className="w-6 h-6 text-ighub-orange shrink-0 mt-0.5" />
+                                    <div>
+                                        <h3 className="font-bold text-base">Please fix the following issues:</h3>
+                                        <ul className="list-disc pl-5 mt-2 space-y-1 text-sm text-rose-800">
+                                            {validationErrors.map((err, idx) => (
+                                                <li key={idx}>{err}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            )}
+
+                            <form onSubmit={handleUpdateForm} className="space-y-8">
+                                {/* Metadata Section */}
+                                <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-xs relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 w-2 h-full bg-ighub-purple"></div>
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <Settings className="w-5 h-5 text-ighub-purple" />
+                                        <h2 className="text-xl font-bold tracking-tight text-ighub-black">
+                                            1. Event & Page Metadata
+                                        </h2>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label htmlFor="title" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
+                                                Event Registration Title <span className="text-ighub-orange">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="title"
+                                                name="title"
+                                                value={metadata.title}
+                                                onChange={handleMetadataChange}
+                                                className="w-full px-4 py-3 bg-ighub-light border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-ighub-green text-sm"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="slug" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
+                                                URL Slug Path <span className="text-ighub-orange">*</span>
+                                            </label>
+                                            <div className="relative flex rounded-xl border border-gray-200 bg-ighub-light focus-within:ring-2 focus-within:ring-ighub-green overflow-hidden">
+                                                <span className="inline-flex items-center px-4 border-r border-gray-200 text-gray-400 text-xs font-semibold select-none">
+                                                    ighub.forms/
+                                                </span>
+                                                <input
+                                                    type="text"
+                                                    id="slug"
+                                                    name="slug"
+                                                    value={metadata.slug}
+                                                    onChange={handleMetadataChange}
+                                                    className="flex-1 px-4 py-3 bg-transparent border-0 focus:outline-none text-ighub-black text-sm"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="description" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
+                                                Event Description
+                                            </label>
+                                            <textarea
+                                                id="description"
+                                                name="description"
+                                                value={metadata.description}
+                                                onChange={handleMetadataChange}
+                                                rows={4}
+                                                className="w-full px-4 py-3 bg-ighub-light border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-ighub-green text-sm resize-y"
+                                                placeholder="Describe the registration details, eligibility, event duration, dates, etc."
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="closes_at" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
+                                                Registration Closing Deadline (Countdown Target)
+                                            </label>
+                                            <input
+                                                type="datetime-local"
+                                                id="closes_at"
+                                                name="closes_at"
+                                                value={metadata.closes_at}
+                                                onChange={handleMetadataChange}
+                                                className="w-full px-4 py-3 bg-ighub-light border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-ighub-green text-sm"
+                                            />
+                                            <p className="mt-1.5 text-xs text-gray-500">
+                                                Sets the countdown clock on the form page. Leave blank if open indefinitely.
+                                            </p>
+                                        </div>
+
+                                        <div className="pt-4 border-t border-gray-100">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-semibold tracking-wide text-ighub-black">
+                                                        Requires Ticket Payment
+                                                    </span>
+                                                    <span className="text-xs text-gray-500 mt-0.5">
+                                                        Toggle if users must complete payment to complete registration
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={handlePaymentToggle}
+                                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                                        metadata.requires_payment ? "bg-ighub-green" : "bg-gray-200"
+                                                    }`}
+                                                >
+                                                    <span
+                                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
+                                                            metadata.requires_payment ? "translate-x-5" : "translate-x-0"
+                                                        }`}
+                                                    />
+                                                </button>
+                                            </div>
+
+                                            {metadata.requires_payment && (
+                                                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6 p-6 bg-ighub-light rounded-xl border border-gray-200 animate-in slide-in-from-top duration-300">
+                                                    <div>
+                                                        <label htmlFor="base_price" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
+                                                            Base Price (NGN)
+                                                        </label>
+                                                        <div className="relative rounded-xl border border-gray-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-ighub-green">
+                                                            <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 font-bold text-sm">
+                                                                ₦
+                                                            </span>
+                                                            <input
+                                                                type="number"
+                                                                id="base_price"
+                                                                name="base_price"
+                                                                min="0"
+                                                                value={metadata.base_price}
+                                                                onChange={handleMetadataChange}
+                                                                className="w-full pl-8 pr-4 py-3 border-0 focus:outline-none text-ighub-black text-sm"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <label htmlFor="discount_price" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
+                                                            Discount/Early Bird Price (NGN)
+                                                        </label>
+                                                        <div className="relative rounded-xl border border-gray-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-ighub-green">
+                                                            <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 font-bold text-sm">
+                                                                ₦
+                                                            </span>
+                                                            <input
+                                                                type="number"
+                                                                id="discount_price"
+                                                                name="discount_price"
+                                                                min="0"
+                                                                value={metadata.discount_price}
+                                                                onChange={handleMetadataChange}
+                                                                className="w-full pl-8 pr-4 py-3 border-0 focus:outline-none text-ighub-black text-sm"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Schema Section */}
+                                <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-xs relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 w-2 h-full bg-ighub-orange"></div>
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div className="flex items-center gap-2">
+                                            <Plus className="w-5 h-5 text-ighub-orange" />
+                                            <h2 className="text-xl font-bold tracking-tight text-ighub-black">
+                                                2. Registration Form Schema
+                                            </h2>
+                                        </div>
+                                        <span className="bg-ighub-light text-ighub-black text-xs font-bold px-3 py-1.5 rounded-full border border-gray-200">
+                                            {fields.length} Fields
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        {fields.map((field, idx) => (
+                                            <div key={field.id} className="bg-ighub-light p-6 rounded-2xl border border-gray-205 relative hover:shadow-2xs transition-all">
+                                                {/* Reorder and Settings header */}
+                                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 pb-4 border-b border-gray-200">
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => moveFieldUp(idx)}
+                                                            disabled={idx === 0}
+                                                            className="p-1.5 bg-white border border-gray-200 text-gray-600 rounded-md cursor-pointer hover:bg-gray-50 disabled:opacity-30 transition-all"
+                                                        >
+                                                            <ArrowUp className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => moveFieldDown(idx)}
+                                                            disabled={idx === fields.length - 1}
+                                                            className="p-1.5 bg-white border border-gray-200 text-gray-600 rounded-md cursor-pointer hover:bg-gray-50 disabled:opacity-30 transition-all"
+                                                        >
+                                                            <ArrowDown className="w-4 h-4" />
+                                                        </button>
+                                                        <span className="text-xs font-bold text-gray-405 uppercase ml-2">
+                                                            Question #{idx + 1}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-4 self-end sm:self-auto">
+                                                        <label className="inline-flex items-center cursor-pointer select-none">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={field.required}
+                                                                onChange={(e) => updateField(field.id, { required: e.target.checked })}
+                                                                className="sr-only peer"
+                                                            />
+                                                            <div className="relative w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-ighub-green" />
+                                                            <span className="ms-2 text-xs font-semibold text-gray-600">
+                                                                Required
+                                                            </span>
+                                                        </label>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => deleteField(field.id)}
+                                                            className="p-1.5 text-rose-500 bg-white border border-rose-100 rounded-md cursor-pointer hover:bg-rose-50 transition-all ml-1 shadow-2xs"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Inputs mapping */}
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div className="md:col-span-2">
+                                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                                                            Question Label
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={field.label}
+                                                            onChange={(e) => updateField(field.id, { label: e.target.value })}
+                                                            className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ighub-green text-sm"
+                                                        />
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                                                            Field Type
+                                                        </label>
+                                                        <select
+                                                            value={field.type}
+                                                            onChange={(e) => updateField(field.id, { type: e.target.value as FormField["type"] })}
+                                                            className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ighub-green text-sm appearance-none cursor-pointer"
+                                                        >
+                                                            <option value="text">Text Response</option>
+                                                            <option value="number">Numeric Answer</option>
+                                                            <option value="select">Dropdown Menu (Select)</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                {field.type === "select" && (
+                                                    <div className="mt-4 p-4 bg-white rounded-xl border border-gray-200 animate-in slide-in-from-top-2 duration-300">
+                                                        <div className="flex justify-between items-center mb-3">
+                                                            <span className="text-xs font-bold text-gray-505 uppercase">
+                                                                Dropdown Selections
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => addOptionToField(field.id)}
+                                                                className="text-xs font-bold text-ighub-green hover:text-ighub-orange transition-colors flex items-center gap-1 cursor-pointer"
+                                                            >
+                                                                <Plus className="w-3.5 h-3.5" />
+                                                                Add Option
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="space-y-2">
+                                                            {field.options.map((opt, oIdx) => (
+                                                                <div key={oIdx} className="flex gap-2 items-center">
+                                                                    <span className="text-xs font-bold text-gray-400 w-4">
+                                                                        {oIdx + 1}.
+                                                                    </span>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={opt}
+                                                                        onChange={(e) => updateOptionInField(field.id, oIdx, e.target.value)}
+                                                                        className="flex-1 px-3 py-1.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ighub-green text-xs"
+                                                                    />
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => deleteOptionFromField(field.id, oIdx)}
+                                                                        className="p-1.5 text-gray-400 hover:text-rose-500 cursor-pointer"
+                                                                    >
+                                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="mt-8 pt-6 border-t border-gray-100 flex justify-center">
+                                        <button
+                                            type="button"
+                                            onClick={addField}
+                                            className="px-6 py-3 border-2 border-dashed border-gray-300 text-gray-650 hover:text-ighub-green hover:border-ighub-green font-semibold text-sm rounded-full transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-3xs"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            Add Question Field
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    variant="primary"
+                                    fullWidth
+                                    disabled={isSubmitting}
+                                    className="font-bold py-4 text-base rounded-2xl cursor-pointer flex justify-center items-center gap-2 shadow-md hover:scale-[1.01] active:scale-[0.99] transition-transform"
                                 >
-                                    Keep Editing
-                                </button>
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            Updating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="w-5 h-5" />
+                                            Save & Update Form Configurations
+                                        </>
+                                    )}
+                                </Button>
+                            </form>
+                        </div>
+
+                        {/* Right Preview */}
+                        <div className="lg:col-span-2">
+                            <div className="sticky top-28 space-y-6">
+                                <div className="bg-white p-3 px-8 rounded-2xl flex justify-between items-center">
+                                    <span className="text-xs font-bold uppercase tracking-wide text-gray-500">Live Preview</span>
+                                    <div className="flex items-center bg-gray-150 p-0.5 rounded-lg">
+                                        <button
+                                            onClick={() => setPreviewDevice("desktop")}
+                                            className={`p-1.5 rounded-md cursor-pointer transition-all ${
+                                                previewDevice === "desktop" ? "bg-white text-ighub-purple shadow-3xs" : "text-gray-400 hover:text-gray-600"
+                                            }`}
+                                        >
+                                            <Laptop className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setPreviewDevice("mobile")}
+                                            className={`p-1.5 rounded-md cursor-pointer transition-all ${
+                                                previewDevice === "mobile" ? "bg-white text-ighub-purple shadow-3xs" : "text-gray-400 hover:text-gray-600"
+                                            }`}
+                                        >
+                                            <Smartphone className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-center transition-all">
+                                    <div className={`bg-white rounded-3xl overflow-hidden transition-all flex flex-col w-full ${previewDevice === "mobile" ? "max-w-[375px] min-h-[640px]" : "min-h-[500px]"}`}>
+                                        {previewDevice === "mobile" && (
+                                            <div className="h-6 bg-gray-900 flex justify-between items-center px-6 text-[10px] text-white/95 shrink-0 select-none">
+                                                <span>09:41</span>
+                                                <div className="flex items-center gap-1">
+                                                    <span>5G</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="p-8 bg-ighub-light/40 border-b border-gray-100 text-center shrink-0">
+                                            <h2 className="text-xl font-black text-ighub-black leading-snug balance max-w-sm mx-auto">
+                                                {metadata.title || "Form Registration Title"}
+                                            </h2>
+                                            {metadata.slug && <p className="text-[10px] text-gray-400 mt-1 font-mono">/{metadata.slug}</p>}
+                                            {metadata.description && <p className="text-xs text-gray-500 mt-3 line-clamp-3">{metadata.description}</p>}
+                                        </div>
+
+                                        {metadata.closes_at && (
+                                            <div className="px-6 pt-6 shrink-0">
+                                                <CountdownTimer targetDate={metadata.closes_at} />
+                                            </div>
+                                        )}
+
+                                        <div className="p-8 space-y-6 flex-1 overflow-y-auto">
+                                            {fields.map((field) => (
+                                                <div key={field.id} className="flex flex-col">
+                                                    <label className="text-xs font-bold tracking-wide text-gray-700 flex items-center gap-1">
+                                                        {field.label}
+                                                        {field.required && <span className="text-ighub-orange">*</span>}
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        disabled
+                                                        className="w-full p-3.5 mt-2 bg-ighub-light border border-gray-200 rounded-xl text-xs placeholder-gray-400 cursor-not-allowed"
+                                                        placeholder="Response input field"
+                                                    />
+                                                </div>
+                                            ))}
+
+                                            {metadata.requires_payment && (
+                                                <div className="bg-ighub-purple text-white p-5 rounded-2xl shrink-0">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Ticket Payment Required</span>
+                                                    <div className="flex items-baseline gap-2 mt-1.5">
+                                                        <span className="text-xl font-bold text-white">₦{(parseFloat(metadata.discount_price) || 0).toLocaleString()}</span>
+                                                        {parseFloat(metadata.base_price) > parseFloat(metadata.discount_price) && (
+                                                            <span className="text-xs text-gray-405 line-through">₦{(parseFloat(metadata.base_price) || 0).toLocaleString()}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    )}
+                    </div>
+                )}
 
-                    {submitStatus.success === false && (
-                        <div className="p-5 bg-rose-50 rounded-xl text-rose-950 flex gap-3 animate-in fade-in duration-300">
-                            <AlertCircle className="w-6 h-6 text-ighub-orange shrink-0 mt-0.5" />
+                {/* 2. SUBMISSIONS TAB */}
+                {activeTab === "submissions" && (
+                    <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-3xs space-y-6 animate-in fade-in duration-300">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
-                                <h3 className="font-bold text-base">Error Saving Form</h3>
-                                <p className="text-sm text-rose-800 mt-1">{submitStatus.message}</p>
+                                <h2 className="text-xl font-bold tracking-tight text-ighub-black flex items-center gap-2">
+                                    <Users className="w-5 h-5 text-ighub-green" />
+                                    Attendee Submissions Index
+                                </h2>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Browse, filter, and export registrations for this event.
+                                </p>
                             </div>
-                        </div>
-                    )}
 
-                    {validationErrors.length > 0 && (
-                        <div
-                            id="validation-errors-alert"
-                            className="p-5 bg-rose-50 border border-rose-200 rounded-xl text-rose-950 flex gap-3 shadow-xs scroll-mt-24 animate-in fade-in duration-300"
-                        >
-                            <AlertCircle className="w-6 h-6 text-ighub-orange shrink-0 mt-0.5" />
-                            <div>
-                                <h3 className="font-bold text-base">Please fix the following issues:</h3>
-                                <ul className="list-disc pl-5 mt-2 space-y-1 text-sm text-rose-800">
-                                    {validationErrors.map((err, idx) => (
-                                        <li key={idx}>{err}</li>
-                                    ))}
-                                </ul>
+                            <button
+                                type="button"
+                                onClick={handleExportCSV}
+                                disabled={submissions.length === 0}
+                                className="px-5 py-2.5 bg-ighub-purple text-white hover:bg-ighub-black transition-colors rounded-xl font-semibold text-xs flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-3xs"
+                            >
+                                <Download className="w-4 h-4" />
+                                Export to CSV (Excel)
+                            </button>
+                        </div>
+
+                        {/* Submissions Search Bar */}
+                        <div className="relative w-full max-w-md flex rounded-xl border border-gray-200 bg-ighub-light focus-within:ring-2 focus-within:ring-ighub-green overflow-hidden">
+                            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
+                                <Search className="w-4 h-4" />
+                            </span>
+                            <input
+                                type="text"
+                                value={submissionsSearch}
+                                onChange={(e) => setSubmissionsSearch(e.target.value)}
+                                placeholder="Search by email, payment status, or ref code..."
+                                className="w-full pl-10 pr-4 py-2.5 bg-transparent border-0 focus:outline-none text-ighub-black text-sm"
+                            />
+                        </div>
+
+                        {/* Submissions List Table */}
+                        {isSubmissionsLoading ? (
+                            <div className="text-center py-12 space-y-2">
+                                <Loader2 className="w-8 h-8 animate-spin text-ighub-green mx-auto" />
+                                <p className="text-xs font-semibold text-gray-400">Loading registrations list...</p>
                             </div>
-                        </div>
-                    )}
+                        ) : filteredSubmissions.length === 0 ? (
+                            <div className="text-center py-16 border border-dashed border-gray-200 rounded-2xl">
+                                <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                <p className="text-gray-500 text-sm font-medium">No registrations match your criteria.</p>
+                            </div>
+                        ) : (
+                            <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-3xs">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-ighub-light border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <th className="px-6 py-4">Attendee Email</th>
+                                            <th className="px-6 py-4">Date Registered</th>
+                                            <th className="px-6 py-4">Payment Status</th>
+                                            <th className="px-6 py-4">Referral Code</th>
+                                            <th className="px-6 py-4 text-right">Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-150 text-sm">
+                                        {filteredSubmissions.map((sub) => {
+                                            const isExpanded = expandedSubmissionId === sub.id;
+                                            return (
+                                                <React.Fragment key={sub.id}>
+                                                    <tr className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-6 py-4 font-semibold text-ighub-black">
+                                                            {sub.submitter_email}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-gray-500 text-xs flex items-center gap-1.5 mt-1 border-0">
+                                                            <Calendar className="w-3.5 h-3.5" />
+                                                            {new Date(sub.created_at).toLocaleDateString()}
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                                                sub.payment_status === "paid"
+                                                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                                                    : sub.payment_status.startsWith("pending")
+                                                                    ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                                                    : "bg-gray-100 text-gray-500 border border-gray-200"
+                                                            }`}>
+                                                                {sub.payment_status.replace("_", " ")}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-xs font-mono font-bold text-ighub-purple">
+                                                            {sub.staff_ref || <span className="text-gray-400 font-normal italic">None</span>}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setExpandedSubmissionId(isExpanded ? null : sub.id)}
+                                                                className="text-gray-400 hover:text-ighub-purple p-1 cursor-pointer"
+                                                            >
+                                                                {isExpanded ? (
+                                                                    <ChevronUp className="w-4 h-4" />
+                                                                ) : (
+                                                                    <ChevronDown className="w-4 h-4" />
+                                                                )}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    
+                                                    {/* Expanded Answers details block */}
+                                                    {isExpanded && (
+                                                        <tr className="bg-ighub-light/40">
+                                                            <td colSpan={5} className="px-8 py-5 border-t border-gray-200">
+                                                                <div className="bg-white p-5 rounded-xl border border-gray-150 space-y-3">
+                                                                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
+                                                                        Registration Questionnaire Responses
+                                                                    </h4>
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                        {Object.entries(sub.answers || {}).map(([fieldId, val]) => (
+                                                                            <div key={fieldId} className="flex flex-col text-xs p-2.5 bg-ighub-light rounded-lg border border-gray-150">
+                                                                                <span className="font-bold text-gray-500 mb-1">
+                                                                                    {getLabelForFieldId(fieldId)}
+                                                                                </span>
+                                                                                <span className="font-semibold text-ighub-black text-sm">
+                                                                                    {typeof val === "object" ? JSON.stringify(val) : String(val)}
+                                                                                </span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                )}
 
-                    {/* Section 1: Event Details & Metadata */}
-                    <form onSubmit={handleUpdateForm} className="space-y-8">
-                        <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-xs relative overflow-hidden">
+                {/* 3. REFERRALS TAB */}
+                {activeTab === "referrals" && (
+                    <div className="space-y-8 animate-in fade-in duration-300">
+                        
+                        {/* New Promoter form */}
+                        <div className="bg-white p-8 rounded-3xl border border-gray-100/60 shadow-3xs relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-2 h-full bg-ighub-purple"></div>
                             
                             <div className="flex items-center gap-2 mb-6">
-                                <div className="p-2 bg-gray-50 rounded-lg text-ighub-purple">
-                                    <Settings className="w-5 h-5" />
-                                </div>
+                                <Share2 className="w-5 h-5 text-ighub-purple" />
                                 <h2 className="text-xl font-bold tracking-tight text-ighub-black">
-                                    1. Event & Page Metadata
+                                    Register Promoter / Referral Candidate
                                 </h2>
                             </div>
 
-                            <div className="space-y-6">
-                                {/* Title */}
+                            {promoterSubmitError && (
+                                <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-950 flex gap-2 text-xs mb-4">
+                                    <AlertCircle className="w-4 h-4 text-ighub-orange shrink-0 mt-0.5" />
+                                    <span>{promoterSubmitError}</span>
+                                </div>
+                            )}
+
+                            <form onSubmit={handleRegisterPromoter} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                                 <div>
-                                    <label htmlFor="title" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
-                                        Event Registration Title <span className="text-ighub-orange">*</span>
+                                    <label htmlFor="p_name" className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                                        Promoter Full Name
                                     </label>
                                     <input
                                         type="text"
-                                        id="title"
-                                        name="title"
-                                        value={metadata.title}
-                                        onChange={handleMetadataChange}
-                                        className="w-full px-4 py-3 bg-ighub-light border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-ighub-green focus:border-transparent transition-all text-ighub-black text-sm"
-                                        placeholder="e.g. NextGen Tech Incubation Hackathon"
+                                        id="p_name"
+                                        value={newPromoterName}
+                                        onChange={(e) => setNewPromoterName(e.target.value)}
+                                        placeholder="e.g. Victor Promotes"
+                                        className="w-full px-3.5 py-2.5 bg-ighub-light border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-ighub-green text-sm"
                                         required
                                     />
                                 </div>
 
-                                {/* Slug */}
                                 <div>
-                                    <label htmlFor="slug" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
-                                        URL Slug Path <span className="text-ighub-orange">*</span>
-                                    </label>
-                                    <div className="relative flex rounded-xl overflow-hidden border border-gray-200 bg-ighub-light focus-within:ring-2 focus-within:ring-ighub-green">
-                                        <span className="inline-flex items-center px-4 border-r border-gray-200 text-gray-400 text-xs font-semibold">
-                                            ighub.forms/
-                                        </span>
-                                        <input
-                                            type="text"
-                                            id="slug"
-                                            name="slug"
-                                            value={metadata.slug}
-                                            onChange={handleMetadataChange}
-                                            className="flex-1 px-4 py-3 bg-transparent border-0 focus:outline-none text-ighub-black text-sm"
-                                            placeholder="hackathon-2026"
-                                            required
-                                        />
-                                    </div>
-                                    <p className="mt-1.5 text-xs text-gray-500">
-                                        Changing the slug changes the live URL handle of the form. Use caution.
-                                    </p>
-                                </div>
-
-                                {/* Description */}
-                                <div>
-                                    <label htmlFor="description" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
-                                        Event Description
-                                    </label>
-                                    <textarea
-                                        id="description"
-                                        name="description"
-                                        value={metadata.description}
-                                        onChange={handleMetadataChange}
-                                        rows={4}
-                                        className="w-full px-4 py-3 bg-ighub-light border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-ighub-green focus:border-transparent transition-all text-ighub-black text-sm resize-y"
-                                        placeholder="Describe the registration details, eligibility, event duration, dates, etc."
-                                    />
-                                </div>
-
-                                {/* Registration Closing Date */}
-                                <div>
-                                    <label htmlFor="closes_at" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
-                                        Registration Closing Deadline (Countdown Target)
+                                    <label htmlFor="p_code" className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                                        Referral Code (Slug Value)
                                     </label>
                                     <input
-                                        type="datetime-local"
-                                        id="closes_at"
-                                        name="closes_at"
-                                        value={metadata.closes_at}
-                                        onChange={handleMetadataChange}
-                                        className="w-full px-4 py-3 bg-ighub-light border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-ighub-green focus:border-transparent transition-all text-ighub-black text-sm"
+                                        type="text"
+                                        id="p_code"
+                                        value={newPromoterCode}
+                                        onChange={(e) => setNewPromoterCode(e.target.value)}
+                                        placeholder="e.g. victor26"
+                                        className="w-full px-3.5 py-2.5 bg-ighub-light border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-ighub-green text-sm"
+                                        required
                                     />
-                                    <p className="mt-1.5 text-xs text-gray-500">
-                                        Sets the countdown clock on the form page. Leave blank if the form should stay open indefinitely.
-                                    </p>
                                 </div>
 
-                                {/* Payment Requirements Toggle */}
-                                <div className="pt-4 border-t border-gray-100">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-semibold tracking-wide text-ighub-black">
-                                                Requires Ticket Payment
-                                            </span>
-                                            <span className="text-xs text-gray-500 mt-0.5">
-                                                Toggle if users must complete online payment (via Paystack/Cash) to complete registration
-                                            </span>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={handlePaymentToggle}
-                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                                metadata.requires_payment ? "bg-ighub-green" : "bg-gray-200"
-                                            }`}
-                                        >
-                                            <span
-                                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
-                                                    metadata.requires_payment ? "translate-x-5" : "translate-x-0"
-                                                }`}
-                                            />
-                                        </button>
-                                    </div>
-
-                                    {/* Payment Fields (Visible if requires_payment is active) */}
-                                    {metadata.requires_payment && (
-                                        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6 p-6 bg-ighub-light rounded-xl border border-gray-200 animate-in slide-in-from-top duration-300">
-                                            <div>
-                                                <label htmlFor="base_price" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
-                                                    Base Price (NGN)
-                                                </label>
-                                                <div className="relative rounded-xl border border-gray-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-ighub-green">
-                                                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 font-bold text-sm">
-                                                        ₦
-                                                    </span>
-                                                    <input
-                                                        type="number"
-                                                        id="base_price"
-                                                        name="base_price"
-                                                        min="0"
-                                                        value={metadata.base_price}
-                                                        onChange={handleMetadataChange}
-                                                        className="w-full pl-8 pr-4 py-3 border-0 focus:outline-none text-ighub-black text-sm"
-                                                        placeholder="5000"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label htmlFor="discount_price" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
-                                                    Discount/Early Bird Price (NGN)
-                                                </label>
-                                                <div className="relative rounded-xl border border-gray-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-ighub-green">
-                                                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 font-bold text-sm">
-                                                        ₦
-                                                    </span>
-                                                    <input
-                                                        type="number"
-                                                        id="discount_price"
-                                                        name="discount_price"
-                                                        min="0"
-                                                        value={metadata.discount_price}
-                                                        onChange={handleMetadataChange}
-                                                        className="w-full pl-8 pr-4 py-3 border-0 focus:outline-none text-ighub-black text-sm"
-                                                        placeholder="3000"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                                <Button type="submit" variant="primary" className="font-semibold py-2.5 rounded-xl cursor-pointer w-full text-sm">
+                                    Register Candidate
+                                </Button>
+                            </form>
                         </div>
 
-                        {/* Section 2: Registration Fields */}
-                        <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-xs relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-2 h-full bg-ighub-orange"></div>
+                        {/* Promoters List */}
+                        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-3xs space-y-6">
+                            <h3 className="text-lg font-bold tracking-tight text-ighub-black flex items-center gap-2">
+                                <Users className="w-5 h-5 text-ighub-green" />
+                                Registered Promoters Directory
+                            </h3>
 
-                            <div className="flex justify-between items-center mb-6">
-                                <div className="flex items-center gap-2">
-                                    <div className="p-2 bg-gray-50 rounded-lg text-ighub-orange">
-                                        <Plus className="w-5 h-5" />
-                                    </div>
-                                    <h2 className="text-xl font-bold tracking-tight text-ighub-black">
-                                        2. Registration Form Schema
-                                    </h2>
+                            {isPromotersLoading ? (
+                                <div className="text-center py-12 space-y-2">
+                                    <Loader2 className="w-8 h-8 animate-spin text-ighub-green mx-auto" />
+                                    <p className="text-xs font-semibold text-gray-400">Loading directory...</p>
                                 </div>
-                                <span className="bg-ighub-light text-ighub-black text-xs font-bold px-3 py-1.5 rounded-full border border-gray-200">
-                                    {fields.length} Fields
-                                </span>
-                            </div>
+                            ) : promoters.length === 0 ? (
+                                <div className="text-center py-12 border border-dashed border-gray-200 rounded-2xl">
+                                    <Share2 className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                                    <p className="text-gray-500 text-sm font-medium">No promoters registered yet. Add one above to create tracking links.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {promoters.map((p) => {
+                                        const cleanCode = p.code.trim().toLowerCase();
+                                        const trackUrl = typeof window !== "undefined"
+                                            ? `${window.location.origin}/${metadata.slug}?ref=${cleanCode}`
+                                            : `/${metadata.slug}?ref=${cleanCode}`;
 
-                            {/* List of Dynamic Schema Fields */}
-                            <div className="space-y-6">
-                                {fields.length === 0 ? (
-                                    <div className="text-center py-12 px-4 border-2 border-dashed border-gray-200 rounded-2xl">
-                                        <Layers className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                                        <p className="text-gray-500 text-sm font-medium">
-                                            No fields configured yet. Create a question field to begin.
-                                        </p>
-                                    </div>
-                                ) : (
-                                    fields.map((field, idx) => (
-                                        <div
-                                            key={field.id}
-                                            className="bg-ighub-light p-6 rounded-2xl border border-gray-200 relative group transition-all duration-300 hover:border-gray-300 hover:shadow-2xs"
-                                        >
-                                            {/* Reorder & Action Controls */}
-                                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 pb-4 border-b border-gray-200">
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => moveFieldUp(idx)}
-                                                        disabled={idx === 0}
-                                                        className="p-1.5 bg-white border border-gray-200 text-gray-600 rounded-md cursor-pointer hover:bg-gray-50 disabled:opacity-30 disabled:pointer-events-none transition-all"
-                                                        title="Move Up"
-                                                    >
-                                                        <ArrowUp className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => moveFieldDown(idx)}
-                                                        disabled={idx === fields.length - 1}
-                                                        className="p-1.5 bg-white border border-gray-200 text-gray-600 rounded-md cursor-pointer hover:bg-gray-50 disabled:opacity-30 disabled:pointer-events-none transition-all"
-                                                        title="Move Down"
-                                                    >
-                                                        <ArrowDown className="w-4 h-4" />
-                                                    </button>
-                                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-2">
-                                                        Question #{idx + 1}
-                                                    </span>
-                                                </div>
-
-                                                <div className="flex items-center gap-4 self-end sm:self-auto">
-                                                    {/* Required Toggle */}
-                                                    <label className="inline-flex items-center cursor-pointer select-none">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={field.required}
-                                                            onChange={(e) => updateField(field.id, { required: e.target.checked })}
-                                                            className="sr-only peer"
-                                                        />
-                                                        <div className="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-ighub-green" />
-                                                        <span className="ms-2 text-xs font-semibold text-gray-600">
-                                                            Required
+                                        return (
+                                            <div key={p.id} className="bg-ighub-light p-5 rounded-2xl border border-gray-200 flex flex-col justify-between hover:shadow-2xs transition-all relative">
+                                                <div className="space-y-4">
+                                                    <div className="flex justify-between items-start gap-4">
+                                                        <div>
+                                                            <h4 className="font-extrabold text-sm text-ighub-black leading-snug">
+                                                                {p.name}
+                                                            </h4>
+                                                            <span className="text-[10px] text-gray-450 font-semibold tracking-wider font-mono">
+                                                                Code: {cleanCode}
+                                                            </span>
+                                                        </div>
+                                                        <span className="bg-white border border-gray-200 text-ighub-purple text-xs font-extrabold px-3 py-1 rounded-full shadow-3xs flex items-center gap-1">
+                                                            {p.referral_count} Regs
                                                         </span>
-                                                    </label>
+                                                    </div>
 
-                                                    {/* Delete Question Field */}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => deleteField(field.id)}
-                                                        className="p-1.5 text-rose-500 bg-white border border-rose-100 rounded-md cursor-pointer hover:bg-rose-50 transition-all ml-1 shadow-2xs"
-                                                        title="Delete Question Field"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            {/* Field Configuration Inputs */}
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                {/* Label Input */}
-                                                <div className="md:col-span-2">
-                                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                                                        Question Label / Name
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={field.label}
-                                                        onChange={(e) => updateField(field.id, { label: e.target.value })}
-                                                        className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ighub-green text-sm"
-                                                        placeholder="e.g. Phone Number, Gender, or T-Shirt Size"
-                                                    />
-                                                </div>
-
-                                                {/* Field Type Select */}
-                                                <div>
-                                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                                                        Input Field Type
-                                                    </label>
-                                                    <select
-                                                        value={field.type}
-                                                        onChange={(e) => updateField(field.id, { type: e.target.value as FormField["type"] })}
-                                                        className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ighub-green text-sm appearance-none cursor-pointer"
-                                                    >
-                                                        <option value="text">Text Response</option>
-                                                        <option value="number">Numeric Answer</option>
-                                                        <option value="select">Dropdown Menu (Select)</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            {/* Dropdown Options List Manager */}
-                                            {field.type === "select" && (
-                                                <div className="mt-4 p-4 bg-white rounded-xl border border-gray-200 animate-in slide-in-from-top-2 duration-300">
-                                                    <div className="flex justify-between items-center mb-3">
-                                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-                                                            Dropdown Selections
+                                                    {/* Track Link copy block */}
+                                                    <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-gray-200">
+                                                        <span className="text-[9px] text-gray-450 font-mono select-all truncate flex-1 leading-normal">
+                                                            ?ref={cleanCode}
                                                         </span>
                                                         <button
                                                             type="button"
-                                                            onClick={() => addOptionToField(field.id)}
-                                                            className="text-xs font-bold text-ighub-green hover:text-ighub-orange transition-colors flex items-center gap-1 cursor-pointer"
+                                                            onClick={() => handleCopyPromoterLink(p.code, p.id)}
+                                                            className="p-1.5 bg-ighub-light hover:bg-gray-150 rounded-lg text-gray-500 transition-all cursor-pointer border border-gray-200 shadow-3xs"
+                                                            title="Copy promoter link"
                                                         >
-                                                            <Plus className="w-3.5 h-3.5" />
-                                                            Add Selection
+                                                            {copiedPromoterId === p.id ? (
+                                                                <Check className="w-3 h-3 text-ighub-green" />
+                                                            ) : (
+                                                                <Copy className="w-3 h-3" />
+                                                            )}
                                                         </button>
                                                     </div>
-
-                                                    <div className="space-y-2">
-                                                        {field.options.map((opt, oIdx) => (
-                                                            <div key={oIdx} className="flex gap-2 items-center">
-                                                                <span className="text-xs font-bold text-gray-400 w-4">
-                                                                    {oIdx + 1}.
-                                                                </span>
-                                                                <input
-                                                                    type="text"
-                                                                    value={opt}
-                                                                    onChange={(e) => updateOptionInField(field.id, oIdx, e.target.value)}
-                                                                    className="flex-1 px-3 py-1.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ighub-green text-xs"
-                                                                    placeholder={`Selection Option ${oIdx + 1}`}
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => deleteOptionFromField(field.id, oIdx)}
-                                                                    className="p-1.5 text-gray-400 hover:text-rose-500 cursor-pointer"
-                                                                    title="Remove option"
-                                                                >
-                                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                                </button>
-                                                            </div>
-                                                        ))}
-                                                    </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    ))
-                                )}
-                            </div>
 
-                            {/* Add Field Button */}
-                            <div className="mt-8 pt-6 border-t border-gray-100 flex justify-center">
-                                <button
-                                    type="button"
-                                    onClick={addField}
-                                    className="px-6 py-3 border-2 border-dashed border-gray-300 text-gray-600 hover:text-ighub-green hover:border-ighub-green font-semibold text-sm rounded-full transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-3xs"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    Add Question Field
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Save Actions Button */}
-                        <div className="pt-4">
-                            <Button
-                                type="submit"
-                                variant="primary"
-                                fullWidth
-                                disabled={isSubmitting}
-                                className="font-bold py-4 text-base tracking-wide rounded-2xl cursor-pointer flex justify-center items-center gap-2 shadow-md hover:scale-[1.01] active:scale-[0.99] transition-transform"
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <Loader2 className="w-5 h-5 animate-spin" />
-                                        Updating...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save className="w-5 h-5" />
-                                        Save & Update Form
-                                    </>
-                                )}
-                            </Button>
-                        </div>
-                    </form>
-                </div>
-
-                {/* RIGHT COLUMN: PREVIEW PANEL */}
-                <div className="lg:col-span-2">
-                    <div className="sticky top-28 space-y-6">
-                        
-                        {/* Device Controls */}
-                        <div className="bg-white p-3 px-8 rounded-2xl flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2.5 h-2.5 rounded-full bg-ighub-green animate-ping"></div>
-                                <span className="text-xs font-bold uppercase tracking-wide text-gray-500 flex items-center gap-1.5">
-                                    Live Form Preview
-                                </span>
-                            </div>
-
-                            <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
-                                <button
-                                    type="button"
-                                    onClick={() => setPreviewDevice("desktop")}
-                                    className={`p-1.5 rounded-md cursor-pointer transition-all ${
-                                        previewDevice === "desktop"
-                                            ? "bg-white text-ighub-purple shadow-3xs"
-                                            : "text-gray-400 hover:text-gray-600"
-                                    }`}
-                                    title="Desktop View"
-                                >
-                                    <Laptop className="w-4 h-4" />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setPreviewDevice("mobile")}
-                                    className={`p-1.5 rounded-md cursor-pointer transition-all ${
-                                        previewDevice === "mobile"
-                                            ? "bg-white text-ighub-purple shadow-3xs"
-                                            : "text-gray-400 hover:text-gray-600"
-                                    }`}
-                                    title="Mobile View"
-                                >
-                                    <Smartphone className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Interactive Preview Container */}
-                        <div className="flex justify-center transition-all duration-500">
-                            <div
-                                className={`bg-white rounded-3xl overflow-hidden transition-all duration-500 flex flex-col ${
-                                    previewDevice === "mobile" ? "w-full max-w-[375px] min-h-[640px]" : "w-full min-h-[500px]"
-                                }`}
-                            >
-                                {/* Top Notch simulation */}
-                                {previewDevice === "mobile" && (
-                                    <div className="h-6 bg-gray-900 flex justify-between items-center px-6 text-[10px] font-semibold text-white/95 tracking-tight shrink-0 select-none">
-                                        <span>09:41</span>
-                                        <div className="w-20 h-4 bg-black rounded-b-xl absolute left-1/2 -translate-x-1/2 top-0"></div>
-                                        <div className="flex items-center gap-1">
-                                            <span>5G</span>
-                                            <div className="w-4 h-2 border border-white/60 rounded-xs flex items-center p-[1px]"><div className="w-full h-full bg-white rounded-2xs"></div></div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Form Header Preview */}
-                                <div className="p-8 bg-ighub-light/40 border-b border-gray-100 text-center shrink-0">
-                                    <h2 className="text-xl font-black text-ighub-black leading-snug balance max-w-sm mx-auto">
-                                        {metadata.title || "Form Registration Title"}
-                                    </h2>
-                                    {metadata.slug && (
-                                        <p className="text-[10px] text-gray-400 mt-1 font-mono tracking-tighter truncate max-w-[250px] mx-auto">
-                                            / {metadata.slug}
-                                        </p>
-                                    )}
-                                    {metadata.description && (
-                                        <p className="text-xs text-gray-500 mt-3 balance leading-relaxed max-w-md mx-auto line-clamp-3">
-                                            {metadata.description}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Live Countdown Timer Preview */}
-                                {metadata.closes_at && (
-                                    <div className="px-6 pt-6 shrink-0">
-                                        <CountdownTimer targetDate={metadata.closes_at} />
-                                    </div>
-                                )}
-
-                                {/* Form Fields Preview */}
-                                <div className="p-8 space-y-6 flex-1 overflow-y-auto">
-                                    {fields.map((field) => (
-                                        <div key={field.id} className="flex flex-col">
-                                            <label className="text-xs font-bold tracking-wide text-gray-700 flex items-center gap-1">
-                                                {field.label || "Unnamed Question"}
-                                                {field.required && <span className="text-ighub-orange">*</span>}
-                                            </label>
-
-                                            {field.type === "text" && (
-                                                <input
-                                                    type="text"
-                                                    disabled
-                                                    className="w-full p-3.5 mt-2 bg-ighub-light border border-gray-200 rounded-xl text-xs placeholder-gray-400 cursor-not-allowed"
-                                                    placeholder="Enter response"
-                                                />
-                                            )}
-
-                                            {field.type === "number" && (
-                                                <input
-                                                    type="number"
-                                                    disabled
-                                                    className="w-full p-3.5 mt-2 bg-ighub-light border border-gray-200 rounded-xl text-xs placeholder-gray-400 cursor-not-allowed"
-                                                    placeholder="0"
-                                                />
-                                            )}
-
-                                            {field.type === "select" && (
-                                                <div className="relative">
-                                                    <select
-                                                        disabled
-                                                        className="w-full p-3.5 mt-2 bg-ighub-light border border-gray-200 rounded-xl text-xs text-gray-500 cursor-not-allowed appearance-none"
+                                                <div className="border-t border-gray-200/60 mt-4 pt-3 flex justify-end">
+                                                    <a
+                                                        href={trackUrl}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="text-[10px] font-extrabold text-gray-500 hover:text-ighub-green transition-colors flex items-center gap-1"
                                                     >
-                                                        {field.options && field.options.length > 0 ? (
-                                                            <>
-                                                                <option value="">Select option</option>
-                                                                {field.options.map((opt, idx) => (
-                                                                    <option key={idx} value={opt}>
-                                                                        {opt}
-                                                                    </option>
-                                                                ))}
-                                                            </>
-                                                        ) : (
-                                                            <option>No options configured</option>
-                                                        )}
-                                                    </select>
+                                                        Test Tracking Link
+                                                        <ExternalLink className="w-3 h-3" />
+                                                    </a>
                                                 </div>
-                                            )}
-                                        </div>
-                                    ))}
-
-                                    {/* Mock Ticket Price Box */}
-                                    {metadata.requires_payment && (
-                                        <div className="bg-ighub-purple text-white p-5 rounded-2xl relative overflow-hidden shrink-0">
-                                            <div className="relative z-10 flex justify-between items-center">
-                                                <div>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">
-                                                            Ticket Payment Required
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-baseline gap-2 mt-1.5">
-                                                        <span className="text-xl font-bold text-white">
-                                                            ₦{(parseFloat(metadata.discount_price) || 0).toLocaleString()}
-                                                        </span>
-                                                        {parseFloat(metadata.base_price) > parseFloat(metadata.discount_price) && (
-                                                            <span className="text-xs text-gray-400 line-through">
-                                                                ₦{(parseFloat(metadata.base_price) || 0).toLocaleString()}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <span className="bg-white/15 backdrop-blur-md text-[9px] font-bold px-2 py-1 rounded-md text-ighub-green border border-white/10 uppercase">
-                                                    Secured Paystack
-                                                </span>
                                             </div>
-                                        </div>
-                                    )}
-
-                                    {/* Action Buttons Mock */}
-                                    <div className="pt-4">
-                                        <button
-                                            type="button"
-                                            disabled
-                                            className="w-full bg-ighub-green text-white font-bold py-3.5 tracking-wide text-xs rounded-full cursor-not-allowed opacity-90 text-center"
-                                        >
-                                            {metadata.requires_payment ? "Proceed to Payment" : "Submit Registration"}
-                                        </button>
-                                    </div>
+                                        );
+                                    })}
                                 </div>
-                            </div>
+                            )}
                         </div>
-
                     </div>
-                </div>
+                )}
 
             </div>
         </main>
