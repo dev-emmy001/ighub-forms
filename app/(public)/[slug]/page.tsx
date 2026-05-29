@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import FormRenderer from "@/components/form-renderer";
+import CountdownTimer from "@/components/countdown-timer";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 
 // Next.js passes the URL parameters (like the slug) into the page props automatically
-export default async function DynamicFormPage({ params }: { params: { slug: string } }) {
-    const { slug } = params;
+export default async function DynamicFormPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
 
     // 1. Fetch the specific form configuration from the database
     const { data: formConfig, error } = await supabase
@@ -18,8 +19,10 @@ export default async function DynamicFormPage({ params }: { params: { slug: stri
         notFound();
     }
 
-    // 3. If the form is drafted or closed, prevent registration
-    if (!formConfig.is_active) {
+    const hasClosed = formConfig.closes_at && new Date(formConfig.closes_at).getTime() <= Date.now();
+
+    // 3. If the form is drafted, closed, or deadline has passed, prevent registration
+    if (!formConfig.is_active || hasClosed) {
         return (
             <div className="min-h-screen flex items-center justify-center text-center p-4">
                 <div>
@@ -32,9 +35,9 @@ export default async function DynamicFormPage({ params }: { params: { slug: stri
 
     return (
         <main className="min-h-screen bg-ighub-light py-16 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-2xl mx-auto space-y-8">
                 {/* Header Section */}
-                <div className="text-center mb-12">
+                <div className="text-center mb-4">
                     <h1 className="text-4xl font-extrabold text-ighub-black tracking-tight mb-4">
                         {formConfig.title}
                     </h1>
@@ -44,6 +47,13 @@ export default async function DynamicFormPage({ params }: { params: { slug: stri
                         </p>
                     )}
                 </div>
+
+                {/* Countdown Timer */}
+                {formConfig.closes_at && (
+                    <div className="w-full">
+                        <CountdownTimer targetDate={formConfig.closes_at} />
+                    </div>
+                )}
 
                 {/* The Form Engine Component */}
                 <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">

@@ -3,9 +3,44 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: Request) {
+// GET: Retrieve a specific form configuration by ID
+export async function GET(req: Request, { params }: { params: Promise<{ formId: string }> }) {
     try {
+        const { formId } = await params;
+
+        if (!formId) {
+            return NextResponse.json({ error: 'Form ID is required' }, { status: 400 });
+        }
+
+        const { data: form, error } = await supabaseAdmin
+            .from('forms')
+            .select('*')
+            .eq('id', formId)
+            .maybeSingle();
+
+        if (error) {
+            console.error('Supabase fetch form error:', error);
+            return NextResponse.json({ error: 'Failed to retrieve form details' }, { status: 500 });
+        }
+
+        if (!form) {
+            return NextResponse.json({ error: 'Form not found' }, { status: 404 });
+        }
+
+        return NextResponse.json(form, { status: 200 });
+
+    } catch (error) {
+        console.error('API Form GET Error:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
+
+// PUT: Update an existing form configuration by ID
+export async function PUT(req: Request, { params }: { params: Promise<{ formId: string }> }) {
+    try {
+        const { formId } = await params;
         const body = await req.json();
+        
         const {
             title,
             slug,
@@ -17,7 +52,11 @@ export async function POST(req: Request) {
             closes_at,
         } = body;
 
-        // 1. Simple validation
+        // 1. Validation
+        if (!formId) {
+            return NextResponse.json({ error: 'Form ID is required' }, { status: 400 });
+        }
+
         if (!title || typeof title !== 'string' || title.trim() === '') {
             return NextResponse.json({ error: 'Title is required' }, { status: 400 });
         }
@@ -26,7 +65,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Slug is required' }, { status: 400 });
         }
 
-        // Validate slug format (alphanumeric and dashes/underscores)
+        // Validate slug format
         const slugRegex = /^[a-z0-9-_]+$/;
         if (!slugRegex.test(slug)) {
             return NextResponse.json(
@@ -52,23 +91,24 @@ export async function POST(req: Request) {
             }
         }
 
-        // 2. Check if slug already exists to prevent duplicate slugs
+        // 2. Check if slug already exists on OTHER forms (prevent duplicates)
         const { data: existingForm, error: checkError } = await supabaseAdmin
             .from('forms')
             .select('id')
             .eq('slug', slug)
+            .neq('id', formId)
             .maybeSingle();
 
         if (checkError) {
-            console.error('Supabase checking error:', checkError);
+            console.error('Supabase check error:', checkError);
             return NextResponse.json({ error: 'Failed to verify slug uniqueness' }, { status: 500 });
         }
 
         if (existingForm) {
-            return NextResponse.json({ error: 'This slug/handle is already in use. Please choose another one.' }, { status: 409 });
+            return NextResponse.json({ error: 'This slug/handle is already in use by another form. Please choose a different one.' }, { status: 409 });
         }
 
-        // 3. Prepare payload for insertion
+        // 3. Prepare payload for update
         const payload = {
             title: title.trim(),
             slug: slug.trim(),
@@ -78,26 +118,26 @@ export async function POST(req: Request) {
             discount_price: requires_payment ? parseFloat(discount_price) || 0 : 0,
             form_schema: form_schema,
             closes_at: closes_at ? new Date(closes_at).toISOString() : null,
-            is_active: true,
-            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
         };
 
-        // 4. Save to Supabase
+        // 4. Update in Supabase
         const { data, error } = await supabaseAdmin
             .from('forms')
-            .insert([payload])
+            .update(payload)
+            .eq('id', formId)
             .select()
             .single();
 
         if (error) {
-            console.error('Supabase Insert Form Error:', error);
+            console.error('Supabase Update Form Error:', error);
             return NextResponse.json({ error: `Database error: ${error.message}` }, { status: 500 });
         }
 
-        return NextResponse.json({ success: true, form: data }, { status: 201 });
+        return NextResponse.json({ success: true, form: data }, { status: 200 });
 
     } catch (error) {
-        console.error('API Forms POST Error:', error);
+        console.error('API Form PUT Error:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

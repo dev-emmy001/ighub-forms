@@ -59,8 +59,8 @@ export default function CountdownTimer({ targetDate }: CountdownTimerProps) {
     ];
 
     return (
-        <div className="w-full max-w-lg mx-auto bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <p className="text-xs font-bold uppercase tracking-widest text-gray-400 text-center mb-6">
+        <div className="w-full max-w-lg mx-auto bg-white rounded-2xl p-6">
+            <p className="text-base font-medium uppercase tracking-widest text-ighub-black text-center mb-6">
                 Registration Closes In
             </p>
 
@@ -100,10 +100,10 @@ export default function CountdownTimer({ targetDate }: CountdownTimerProps) {
 
                             {/* Centered Text */}
                             <div className="flex flex-col items-center justify-center z-10 pt-1">
-                                <span className="text-xl sm:text-2xl font-black text-ighub-black leading-none">
+                                <span className="text-lg sm:text-lg text-ighub-black leading-none">
                                     {String(block.value).padStart(2, "0")}
                                 </span>
-                                <span className="text-[10px] sm:text-xs font-medium text-gray-500 mt-1">
+                                <span className="text-[8px] sm:text-[8px] font-medium text-gray-500 mt-1">
                                     {block.label}
                                 </span>
                             </div>

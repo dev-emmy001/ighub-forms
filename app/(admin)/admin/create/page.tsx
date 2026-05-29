@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import CountdownTimer from "@/components/countdown-timer";
 import {
     Plus,
     Trash2,
@@ -37,6 +38,7 @@ interface EventMetadata {
     requires_payment: boolean;
     base_price: string;
     discount_price: string;
+    closes_at: string;
 }
 
 export default function CreateFormPage() {
@@ -50,6 +52,7 @@ export default function CreateFormPage() {
         requires_payment: false,
         base_price: "0",
         discount_price: "0",
+        closes_at: "",
     });
 
     const [fields, setFields] = useState<FormField[]>([
@@ -301,6 +304,7 @@ export default function CreateFormPage() {
                     base_price: metadata.base_price,
                     discount_price: metadata.discount_price,
                     form_schema: fields,
+                    closes_at: metadata.closes_at || null,
                 }),
             });
 
@@ -324,6 +328,7 @@ export default function CreateFormPage() {
                 requires_payment: false,
                 base_price: "0",
                 discount_price: "0",
+                closes_at: "",
             });
             setFields([
                 {
@@ -417,7 +422,7 @@ export default function CreateFormPage() {
                     )}
 
                     {submitStatus.success === false && (
-                        <div className="p-5 bg-rose-50 border border-rose-200 rounded-xl text-rose-950 flex gap-3 shadow-xs animate-in fade-in duration-300">
+                        <div className="p-5 bg-rose-50 rounded-xl text-rose-950 flex gap-3 animate-in fade-in duration-300">
                             <AlertCircle className="w-6 h-6 text-ighub-orange shrink-0 mt-0.5" />
                             <div>
                                 <h3 className="font-bold text-base">Error Saving Form</h3>
@@ -514,6 +519,24 @@ export default function CreateFormPage() {
                                         className="w-full px-4 py-3 bg-ighub-light border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-ighub-green focus:border-transparent transition-all text-ighub-black text-sm resize-y"
                                         placeholder="Describe the registration details, eligibility, event duration, dates, etc."
                                     />
+                                </div>
+
+                                {/* Registration Closing Date */}
+                                <div>
+                                    <label htmlFor="closes_at" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
+                                        Registration Closing Deadline (Countdown Target)
+                                    </label>
+                                    <input
+                                        type="datetime-local"
+                                        id="closes_at"
+                                        name="closes_at"
+                                        value={metadata.closes_at}
+                                        onChange={handleMetadataChange}
+                                        className="w-full px-4 py-3 bg-ighub-light border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-ighub-green focus:border-transparent transition-all text-ighub-black text-sm"
+                                    />
+                                    <p className="mt-1.5 text-xs text-gray-500">
+                                        Sets the countdown clock on the form page. Leave blank if the form should stay open indefinitely.
+                                    </p>
                                 </div>
 
                                 {/* Payment Requirements Toggle */}
@@ -874,6 +897,13 @@ export default function CreateFormPage() {
                                     )}
                                 </div>
 
+                                {/* Live Countdown Timer Preview */}
+                                {metadata.closes_at && (
+                                    <div className="px-6 pt-6 shrink-0">
+                                        <CountdownTimer targetDate={metadata.closes_at} />
+                                    </div>
+                                )}
+
                                 {/* Form Fields Preview */}
                                 <div className="p-8 space-y-6 flex-1 overflow-y-auto">
                                     {fields.map((field) => (
@@ -927,7 +957,7 @@ export default function CreateFormPage() {
 
                                     {/* Mock Ticket Price Box if payment active */}
                                     {metadata.requires_payment && (
-                                        <div className="bg-gradient-to-br from-ighub-purple to-ighub-black text-white p-5 rounded-2xl relative overflow-hidden shrink-0">
+                                        <div className="bg-ighub-purple text-white p-5 rounded-2xl relative overflow-hidden shrink-0">
                                             <div className="relative z-10 flex justify-between items-center">
                                                 <div>
                                                     <div className="flex items-center gap-1.5">
