@@ -358,16 +358,10 @@ export default function CreateFormPage() {
     return (
         <main className="min-h-screen bg-ighub-light text-ighub-black flex flex-col">
             {/* Header Area */}
-            <header className="border-b border-gray-200 bg-white sticky top-0 z-30 px-6 py-4 shadow-xs">
+            <header className="bg-white sticky top-0 z-30 px-6 py-3">
                 <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
-                            <span className="text-ighub-purple">Admin Portal</span>
-                            <span>/</span>
-                            <span>Forms Engine</span>
-                        </div>
-                        <h1 className="text-2xl font-extrabold tracking-tight text-ighub-black flex items-center gap-2">
-                            <Layers className="w-6 h-6 text-ighub-green" />
+                        <h1 className="text-2xl font-bold tracking-tight text-ighub-black flex items-center gap-2">
                             Create Registration Form
                         </h1>
                     </div>
@@ -791,12 +785,11 @@ export default function CreateFormPage() {
                                 {isSubmitting ? (
                                     <>
                                         <Loader2 className="w-5 h-5 animate-spin" />
-                                        Publishing to Supabase...
+                                        Publishing...
                                     </>
                                 ) : (
                                     <>
-                                        <Sparkles className="w-5 h-5 text-white animate-pulse" />
-                                        Create & Publish Form Schema
+                                        Publish Form
                                     </>
                                 )}
                             </Button>
@@ -809,7 +802,7 @@ export default function CreateFormPage() {
                     <div className="sticky top-28 space-y-6">
 
                         {/* Device & Controls Bar */}
-                        <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-xs flex justify-between items-center">
+                        <div className="bg-white p-3 px-8 rounded-2xl flex justify-between items-center">
                             <div className="flex items-center gap-2">
                                 <div className="w-2.5 h-2.5 rounded-full bg-ighub-green animate-ping"></div>
                                 <span className="text-xs font-bold uppercase tracking-wide text-gray-500 flex items-center gap-1.5">
@@ -817,7 +810,7 @@ export default function CreateFormPage() {
                                 </span>
                             </div>
 
-                            <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                            <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
                                 <button
                                     type="button"
                                     onClick={() => setPreviewDevice("desktop")}
@@ -846,7 +839,7 @@ export default function CreateFormPage() {
                         {/* Interactive Render Wrapper */}
                         <div className="flex justify-center transition-all duration-500">
                             <div
-                                className={`bg-white rounded-3xl border border-gray-100 shadow-lg overflow-hidden transition-all duration-500 flex flex-col ${previewDevice === "mobile" ? "w-full max-w-[375px] min-h-[640px]" : "w-full min-h-[500px]"
+                                className={`bg-white rounded-3xl overflow-hidden transition-all duration-500 flex flex-col ${previewDevice === "mobile" ? "w-full max-w-[375px] min-h-[640px]" : "w-full min-h-[500px]"
                                     }`}
                             >
                                 {/* Mobile Phone Top Notch Simulation */}
@@ -863,9 +856,9 @@ export default function CreateFormPage() {
 
                                 {/* Form Header Preview */}
                                 <div className="p-8 bg-ighub-light/40 border-b border-gray-100 text-center shrink-0">
-                                    <span className="inline-block bg-white text-ighub-green border border-ighub-green text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-3 shadow-3xs">
+                                    {/* <span className="inline-block bg-white text-ighub-green border border-ighub-green text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-3 shadow-3xs">
                                         Registration Live
-                                    </span>
+                                    </span> */}
                                     <h2 className="text-xl font-black text-ighub-black leading-snug balance max-w-sm mx-auto">
                                         {metadata.title || "Form Registration Title"}
                                     </h2>
@@ -934,20 +927,17 @@ export default function CreateFormPage() {
 
                                     {/* Mock Ticket Price Box if payment active */}
                                     {metadata.requires_payment && (
-                                        <div className="bg-gradient-to-br from-ighub-purple to-ighub-black text-white p-5 rounded-2xl border border-white/5 relative overflow-hidden shadow-md shrink-0">
-                                            <div className="absolute -right-6 -bottom-6 opacity-10 rotate-12">
-                                                <CreditCard className="w-24 h-24" />
-                                            </div>
+                                        <div className="bg-gradient-to-br from-ighub-purple to-ighub-black text-white p-5 rounded-2xl relative overflow-hidden shrink-0">
                                             <div className="relative z-10 flex justify-between items-center">
                                                 <div>
                                                     <div className="flex items-center gap-1.5">
-                                                        <CreditCard className="w-4 h-4 text-ighub-green" />
+                                                        {/* <CreditCard className="w-4 h-4 text-ighub-green" /> */}
                                                         <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">
                                                             Ticket Payment Required
                                                         </span>
                                                     </div>
                                                     <div className="flex items-baseline gap-2 mt-1.5">
-                                                        <span className="text-xl font-extrabold text-white">
+                                                        <span className="text-xl font-bold text-white">
                                                             ₦{(parseFloat(metadata.discount_price) || 0).toLocaleString()}
                                                         </span>
                                                         {parseFloat(metadata.base_price) > parseFloat(metadata.discount_price) && (
