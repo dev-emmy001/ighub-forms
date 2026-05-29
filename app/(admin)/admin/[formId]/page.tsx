@@ -122,6 +122,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
     const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
     const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [submitStatus, setSubmitStatus] = useState<{
         success?: boolean;
         message?: string;
@@ -504,6 +505,12 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
             return;
         }
 
+        // Prompt the confirmation modal
+        setShowConfirmModal(true);
+    };
+
+    const proceedWithUpdate = async () => {
+        setShowConfirmModal(false);
         setIsSubmitting(true);
 
         try {
@@ -1411,6 +1418,39 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                 )}
 
             </div>
+
+            {/* Confirmation Modal Overlay */}
+            {showConfirmModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white max-w-md w-full rounded-[2rem] p-8 shadow-2xl border border-gray-150 flex flex-col items-center text-center space-y-5 animate-in zoom-in-95 duration-200">
+                        <div className="p-4 bg-amber-50 text-amber-500 rounded-full">
+                            <AlertCircle className="w-8 h-8" />
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-bold text-ighub-black">Confirm Form Update</h3>
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                Are you sure you want to save and publish these changes to this registration form? Any edits to fields, deadlines, or pricing settings will take effect immediately.
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-3 w-full pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmModal(false)}
+                                className="flex-1 py-3 px-4 border border-gray-250 text-gray-700 font-semibold rounded-full text-xs hover:bg-gray-50 transition-colors cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={proceedWithUpdate}
+                                className="flex-1 py-3 px-4 bg-ighub-purple text-white font-semibold rounded-full text-xs hover:bg-opacity-95 transition-colors cursor-pointer shadow-sm shadow-ighub-purple/10"
+                            >
+                                Confirm & Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </main>
     );
 }

@@ -47,11 +47,11 @@ export default async function DynamicFormPage({ params }: { params: Promise<{ sl
             <div className="max-w-2xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-12 space-y-8 flex-1">
                 {/* Header Section */}
                 <div className="text-center mb-4">
-                    <h1 className="text-4xl font-bold text-ighub-black tracking-tight mb-4">
+                    <h1 className="text-lg font-bold text-ighub-black tracking-tight mb-4">
                         {formConfig.title}
                     </h1>
                     {formConfig.description && (
-                        <p className="text-lg text-gray-600">
+                        <p className="text-sm text-gray-600">
                             {formConfig.description}
                         </p>
                     )}
