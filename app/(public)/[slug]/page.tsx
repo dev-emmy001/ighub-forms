@@ -34,10 +34,10 @@ export default async function DynamicFormPage({ params }: { params: Promise<{ sl
     }
 
     return (
-        <main className="min-h-screen bg-ighub-light pb-24 relative flex flex-col">
+        <main className="min-h-screen pb-24 relative flex flex-col">
             {/* Sticky Countdown Timer fixed to the top of the viewport */}
             {formConfig.closes_at && (
-                <div className="sticky top-0 z-50 w-full bg-white/75  py-4 px-4 sm:px-6 lg:px-8 flex justify-center shrink-0">
+                <div className="sticky top-0 z-50 w-full  py-4 px-4 sm:px-6 lg:px-8 flex justify-center shrink-0">
                     <div className="w-full max-w-2xl">
                         <CountdownTimer targetDate={formConfig.closes_at} />
                     </div>

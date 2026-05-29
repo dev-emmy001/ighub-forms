@@ -580,9 +580,9 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
     }
 
     return (
-        <main className="min-h-screen bg-ighub-light text-ighub-black flex flex-col font-sans">
+        <main className="min-h-screen bg-ighub-light text-ighub-black flex flex-col">
             {/* Header Area */}
-            <header className="bg-white px-6 py-4 border-b border-gray-150 sticky top-0 z-30">
+            <header className="bg-white px-6 py-4 sticky top-0 z-30">
                 <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
@@ -597,34 +597,31 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
 
                     <div className="flex items-center gap-3 self-stretch sm:self-auto justify-between sm:justify-start">
                         {/* Tab buttons */}
-                        <div className="flex bg-gray-150 p-1 rounded-xl text-xs font-bold uppercase tracking-wider">
+                        <div className="flex bg-gray-150 p-1 rounded-xl text-sm font-semibold">
                             <button
                                 onClick={() => setActiveTab("editor")}
-                                className={`px-4 py-2 rounded-lg cursor-pointer transition-all ${
-                                    activeTab === "editor"
-                                        ? "bg-white text-ighub-purple shadow-3xs"
-                                        : "text-gray-500 hover:text-gray-700"
-                                }`}
+                                className={`px-4 py-2 rounded-lg cursor-pointer transition-all ${activeTab === "editor"
+                                    ? "bg-white text-ighub-purple shadow-3xs"
+                                    : "text-gray-500 hover:text-gray-700"
+                                    }`}
                             >
                                 Editor
                             </button>
                             <button
                                 onClick={() => setActiveTab("submissions")}
-                                className={`px-4 py-2 rounded-lg cursor-pointer transition-all ${
-                                    activeTab === "submissions"
-                                        ? "bg-white text-ighub-purple shadow-3xs"
-                                        : "text-gray-500 hover:text-gray-700"
-                                }`}
+                                className={`px-4 py-2 rounded-lg cursor-pointer transition-all ${activeTab === "submissions"
+                                    ? "bg-white text-ighub-purple shadow-3xs"
+                                    : "text-gray-500 hover:text-gray-700"
+                                    }`}
                             >
                                 Submissions
                             </button>
                             <button
                                 onClick={() => setActiveTab("referrals")}
-                                className={`px-4 py-2 rounded-lg cursor-pointer transition-all ${
-                                    activeTab === "referrals"
-                                        ? "bg-white text-ighub-purple shadow-3xs"
-                                        : "text-gray-500 hover:text-gray-700"
-                                }`}
+                                className={`px-4 py-2 rounded-lg cursor-pointer transition-all ${activeTab === "referrals"
+                                    ? "bg-white text-ighub-purple shadow-3xs"
+                                    : "text-gray-500 hover:text-gray-700"
+                                    }`}
                             >
                                 Referrals
                             </button>
@@ -644,15 +641,15 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
 
             {/* TAB INTERFACES */}
             <div className="flex-1 max-w-7xl w-full mx-auto p-6">
-                
+
                 {/* 1. EDITOR TAB */}
                 {activeTab === "editor" && (
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                         {/* Left Editor */}
                         <div className="lg:col-span-3 space-y-8">
-                            
+
                             {submitStatus.success && (
-                                <div className="p-6 bg-emerald-50 border border-emerald-250 rounded-2xl text-emerald-950 flex flex-col gap-3 shadow-xs animate-in fade-in duration-300">
+                                <div className="p-6 bg-emerald-50 rounded-2xl text-emerald-950 flex flex-col gap-3 animate-in fade-in duration-300">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-emerald-500 text-white rounded-full">
                                             <Check className="w-5 h-5" />
@@ -667,7 +664,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                             href={`/${submitStatus.createdSlug}`}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="px-4 py-2 bg-ighub-green text-white hover:bg-ighub-orange transition-all duration-300 text-sm font-semibold rounded-full flex items-center gap-1 shadow-sm"
+                                            className="px-4 py-2 bg-ighub-green text-white hover:bg-ighub-orange transition-all duration-300 text-sm font-semibold rounded-full flex items-center gap-1"
                                         >
                                             <Eye className="w-4 h-4" />
                                             View Live Form
@@ -711,12 +708,10 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
 
                             <form onSubmit={handleUpdateForm} className="space-y-8">
                                 {/* Metadata Section */}
-                                <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-xs relative overflow-hidden">
-                                    <div className="absolute top-0 left-0 w-2 h-full bg-ighub-purple"></div>
+                                <div className="bg-white p-8 rounded-2xl relative overflow-hidden">
                                     <div className="flex items-center gap-2 mb-6">
-                                        <Settings className="w-5 h-5 text-ighub-purple" />
                                         <h2 className="text-xl font-bold tracking-tight text-ighub-black">
-                                            1. Event & Page Metadata
+                                            Event & Page Metadata
                                         </h2>
                                     </div>
 
@@ -742,7 +737,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                             </label>
                                             <div className="relative flex rounded-xl border border-gray-200 bg-ighub-light focus-within:ring-2 focus-within:ring-ighub-green overflow-hidden">
                                                 <span className="inline-flex items-center px-4 border-r border-gray-200 text-gray-400 text-xs font-semibold select-none">
-                                                    ighub.forms/
+                                                    forms.ighub.ng/
                                                 </span>
                                                 <input
                                                     type="text"
@@ -801,14 +796,12 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                 <button
                                                     type="button"
                                                     onClick={handlePaymentToggle}
-                                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                                        metadata.requires_payment ? "bg-ighub-green" : "bg-gray-200"
-                                                    }`}
+                                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${metadata.requires_payment ? "bg-ighub-green" : "bg-gray-200"
+                                                        }`}
                                                 >
                                                     <span
-                                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
-                                                            metadata.requires_payment ? "translate-x-5" : "translate-x-0"
-                                                        }`}
+                                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${metadata.requires_payment ? "translate-x-5" : "translate-x-0"
+                                                            }`}
                                                     />
                                                 </button>
                                             </div>
@@ -861,13 +854,13 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                 </div>
 
                                 {/* Schema Section */}
-                                <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-xs relative overflow-hidden">
-                                    <div className="absolute top-0 left-0 w-2 h-full bg-ighub-orange"></div>
+                                <div className="bg-white p-8 rounded-2xl relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 w-2 h-full "></div>
                                     <div className="flex justify-between items-center mb-6">
                                         <div className="flex items-center gap-2">
-                                            <Plus className="w-5 h-5 text-ighub-orange" />
+                                            {/* <Plus className="w-5 h-5 text-ighub-orange" /> */}
                                             <h2 className="text-xl font-bold tracking-tight text-ighub-black">
-                                                2. Registration Form Schema
+                                                Registration Form Schema
                                             </h2>
                                         </div>
                                         <span className="bg-ighub-light text-ighub-black text-xs font-bold px-3 py-1.5 rounded-full border border-gray-200">
@@ -877,7 +870,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
 
                                     <div className="space-y-6">
                                         {fields.map((field, idx) => (
-                                            <div key={field.id} className="bg-ighub-light p-6 rounded-2xl border border-gray-205 relative hover:shadow-2xs transition-all">
+                                            <div key={field.id} className="bg-ighub-light p-6 rounded-2xl  relative hover:shadow-2xs transition-all">
                                                 {/* Reorder and Settings header */}
                                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 pb-4 border-b border-gray-200">
                                                     <div className="flex items-center gap-2">
@@ -897,8 +890,8 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                         >
                                                             <ArrowDown className="w-4 h-4" />
                                                         </button>
-                                                        <span className="text-xs font-bold text-gray-405 uppercase ml-2">
-                                                            Question #{idx + 1}
+                                                        <span className="text-xs font-bold text-gray-405">
+                                                            Question {idx + 1}
                                                         </span>
                                                     </div>
 
@@ -1042,17 +1035,15 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                     <div className="flex items-center bg-gray-150 p-0.5 rounded-lg">
                                         <button
                                             onClick={() => setPreviewDevice("desktop")}
-                                            className={`p-1.5 rounded-md cursor-pointer transition-all ${
-                                                previewDevice === "desktop" ? "bg-white text-ighub-purple shadow-3xs" : "text-gray-400 hover:text-gray-600"
-                                            }`}
+                                            className={`p-1.5 rounded-md cursor-pointer transition-all ${previewDevice === "desktop" ? "bg-white text-ighub-purple shadow-3xs" : "text-gray-400 hover:text-gray-600"
+                                                }`}
                                         >
                                             <Laptop className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => setPreviewDevice("mobile")}
-                                            className={`p-1.5 rounded-md cursor-pointer transition-all ${
-                                                previewDevice === "mobile" ? "bg-white text-ighub-purple shadow-3xs" : "text-gray-400 hover:text-gray-600"
-                                            }`}
+                                            className={`p-1.5 rounded-md cursor-pointer transition-all ${previewDevice === "mobile" ? "bg-white text-ighub-purple shadow-3xs" : "text-gray-400 hover:text-gray-600"
+                                                }`}
                                         >
                                             <Smartphone className="w-4 h-4" />
                                         </button>
@@ -1125,7 +1116,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
                                 <h2 className="text-xl font-bold tracking-tight text-ighub-black flex items-center gap-2">
-                                    <Users className="w-5 h-5 text-ighub-green" />
+                                    {/* <Users className="w-5 h-5 text-ighub-green" /> */}
                                     Attendee Submissions Index
                                 </h2>
                                 <p className="text-xs text-gray-500 mt-1">
@@ -1166,7 +1157,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                             </div>
                         ) : filteredSubmissions.length === 0 ? (
                             <div className="text-center py-16 border border-dashed border-gray-200 rounded-2xl">
-                                <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                {/* <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" /> */}
                                 <p className="text-gray-500 text-sm font-medium">No registrations match your criteria.</p>
                             </div>
                         ) : (
@@ -1195,13 +1186,12 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                             {new Date(sub.created_at).toLocaleDateString()}
                                                         </td>
                                                         <td className="px-6 py-4">
-                                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                                                sub.payment_status === "paid"
-                                                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                                                    : sub.payment_status.startsWith("pending")
+                                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${sub.payment_status === "paid"
+                                                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                                                : sub.payment_status.startsWith("pending")
                                                                     ? "bg-amber-50 text-amber-700 border border-amber-200"
                                                                     : "bg-gray-100 text-gray-500 border border-gray-200"
-                                                            }`}>
+                                                                }`}>
                                                                 {sub.payment_status.replace("_", " ")}
                                                             </span>
                                                         </td>
@@ -1222,7 +1212,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                             </button>
                                                         </td>
                                                     </tr>
-                                                    
+
                                                     {/* Expanded Answers details block */}
                                                     {isExpanded && (
                                                         <tr className="bg-ighub-light/40">
@@ -1260,13 +1250,13 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                 {/* 3. REFERRALS TAB */}
                 {activeTab === "referrals" && (
                     <div className="space-y-8 animate-in fade-in duration-300">
-                        
+
                         {/* New Promoter form */}
                         <div className="bg-white p-8 rounded-3xl border border-gray-100/60 shadow-3xs relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-2 h-full bg-ighub-purple"></div>
-                            
+                            <div className="absolute top-0 left-0 w-2 h-full"></div>
+
                             <div className="flex items-center gap-2 mb-6">
-                                <Share2 className="w-5 h-5 text-ighub-purple" />
+                                {/* <Share2 className="w-5 h-5 text-ighub-purple" /> */}
                                 <h2 className="text-xl font-bold tracking-tight text-ighub-black">
                                     Register Promoter / Referral Candidate
                                 </h2>
@@ -1319,7 +1309,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                         {/* Promoters List */}
                         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-3xs space-y-6">
                             <h3 className="text-lg font-bold tracking-tight text-ighub-black flex items-center gap-2">
-                                <Users className="w-5 h-5 text-ighub-green" />
+                                {/* <Users className="w-5 h-5 text-ighub-green" /> */}
                                 Registered Promoters Directory
                             </h3>
 
