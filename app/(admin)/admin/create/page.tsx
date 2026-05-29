@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import CountdownTimer from "@/components/countdown-timer";
+import { createBrowserClientInstance } from "@/lib/supabase-browser";
 import {
     Plus,
     Trash2,
@@ -19,7 +20,8 @@ import {
     Loader2,
     ArrowLeft,
     Settings,
-    Layers
+    Layers,
+    LogOut
 } from "lucide-react";
 
 // Interface as requested
@@ -43,6 +45,18 @@ interface EventMetadata {
 
 export default function CreateFormPage() {
     const router = useRouter();
+
+    const handleLogout = async () => {
+        try {
+            const supabase = createBrowserClientInstance();
+            await supabase.auth.signOut();
+            router.push("/login");
+            router.refresh();
+        } catch (err) {
+            console.error("Logout failed:", err);
+            router.push("/login");
+        }
+    };
 
     // 1. Initial State Definition
     const [metadata, setMetadata] = useState<EventMetadata>({
@@ -378,6 +392,14 @@ export default function CreateFormPage() {
                         >
                             <ArrowLeft className="w-4 h-4" />
                             Back to Console
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={handleLogout}
+                            className="text-sm px-4 py-2 flex items-center gap-2 rounded-full cursor-pointer hover:bg-rose-50 text-rose-600 hover:text-rose-700"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Logout
                         </Button>
                     </div>
                 </div>

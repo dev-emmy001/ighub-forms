@@ -4,6 +4,7 @@ import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import CountdownTimer from "@/components/countdown-timer";
+import { createBrowserClientInstance } from "@/lib/supabase-browser";
 import {
     Plus,
     Trash2,
@@ -29,7 +30,8 @@ import {
     Calendar,
     ChevronDown,
     ChevronUp,
-    ExternalLink
+    ExternalLink,
+    LogOut
 } from "lucide-react";
 
 interface FormField {
@@ -72,6 +74,18 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
     const params = use(paramsPromise);
     const { formId } = params;
     const router = useRouter();
+
+    const handleLogout = async () => {
+        try {
+            const supabase = createBrowserClientInstance();
+            await supabase.auth.signOut();
+            router.push("/login");
+            router.refresh();
+        } catch (err) {
+            console.error("Logout failed:", err);
+            router.push("/login");
+        }
+    };
 
     // 1. Tabs state
     const [activeTab, setActiveTab] = useState<"editor" | "submissions" | "referrals">("editor");
@@ -634,6 +648,14 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                         >
                             <ArrowLeft className="w-4 h-4" />
                             Console
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={handleLogout}
+                            className="text-xs px-4 py-2 flex items-center gap-1.5 rounded-full cursor-pointer hover:bg-rose-50 text-rose-600 hover:text-rose-700 shrink-0"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Logout
                         </Button>
                     </div>
                 </div>

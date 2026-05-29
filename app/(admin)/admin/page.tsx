@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { createBrowserClientInstance } from "@/lib/supabase-browser";
 import {
     Plus,
     Layers,
@@ -15,7 +16,8 @@ import {
     Loader2,
     AlertCircle,
     Power,
-    ArrowUpRight
+    ArrowUpRight,
+    LogOut
 } from "lucide-react";
 
 interface FormConfig {
@@ -97,6 +99,18 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            const supabase = createBrowserClientInstance();
+            await supabase.auth.signOut();
+            router.push("/login");
+            router.refresh();
+        } catch (err) {
+            console.error("Logout failed:", err);
+            router.push("/login");
+        }
+    };
+
     // 3. Copy Link Helper
     const handleCopyLink = (slug: string, id: string) => {
         if (typeof window === "undefined") return;
@@ -128,12 +142,22 @@ export default function AdminDashboardPage() {
                             Forms Administration Console
                         </h1>
                     </div>
-                    <Link href="/admin/create">
-                        <Button variant="primary" className="cursor-pointer font-semibold rounded-full flex items-center gap-2">
-                            <Plus className="w-4 h-4" />
-                            Create New Form
+                    <div className="flex items-center gap-3">
+                        <Link href="/admin/create">
+                            <Button variant="primary" className="cursor-pointer font-semibold rounded-full flex items-center gap-2">
+                                <Plus className="w-4 h-4" />
+                                Create New Form
+                            </Button>
+                        </Link>
+                        <Button
+                            variant="secondary"
+                            onClick={handleLogout}
+                            className="cursor-pointer font-semibold rounded-full flex items-center gap-2 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Logout
                         </Button>
-                    </Link>
+                    </div>
                 </div>
             </header>
 
