@@ -247,7 +247,7 @@ export default function PartnersDashboardClient({
                         <Users className="w-6 h-6" />
                     </div>
                     <div>
-                        <span className="text-xs font-bold text-gray-400 ">Total Applications</span>
+                        <span className="text-xs text-gray-400 ">Total Applications</span>
                         <h3 className="text-3xl text-ighub-black mt-1">{totalCount}</h3>
                     </div>
                 </div>
@@ -258,7 +258,7 @@ export default function PartnersDashboardClient({
                         <Clock className="w-6 h-6" />
                     </div>
                     <div>
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">Pending Review</span>
+                        <span className="text-xs text-gray-400">Pending Review</span>
                         <h3 className="text-3xl text-ighub-black mt-1">{pendingCount}</h3>
                     </div>
                 </div>
@@ -269,7 +269,7 @@ export default function PartnersDashboardClient({
                         <UserCheck className="w-6 h-6" />
                     </div>
                     <div>
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">Approved Partners</span>
+                        <span className="text-xs text-gray-400">Approved Partners</span>
                         <h3 className="text-3xl text-ighub-black mt-1">{approvedCount}</h3>
                     </div>
                 </div>
@@ -339,8 +339,8 @@ export default function PartnersDashboardClient({
             {/* Submissions Index Grid */}
             {filteredSubmissions.length === 0 ? (
                 <div className="text-center py-20 bg-white border border-gray-100 rounded-3xl p-6 shadow-3xs">
-                    <Briefcase className="w-16 h-16 text-gray-250 mx-auto mb-4" />
-                    <h3 className="text-lg font-bold text-ighub-black">No candidates found</h3>
+                    {/* <Briefcase className="w-16 h-16 text-gray-250 mx-auto mb-4" /> */}
+                    <h3 className="text-lg text-ighub-black">No candidates found</h3>
                     <p className="text-sm text-gray-400 max-w-xs mx-auto mt-1">
                         We couldn't find any affiliate submissions matching your current filters.
                     </p>

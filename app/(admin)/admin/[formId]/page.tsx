@@ -589,7 +589,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                 <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-gray-100 shadow-xs text-center space-y-6">
                     <AlertCircle className="w-12 h-12 text-ighub-orange mx-auto" />
                     <div>
-                        <h2 className="text-lg font-bold text-ighub-black">Failed to load Form</h2>
+                        <h2 className="text-lg  text-ighub-black">Failed to load Form</h2>
                         <p className="text-sm text-gray-500 mt-2">{fetchError}</p>
                     </div>
                     <Button variant="secondary" onClick={() => router.push("/admin")} fullWidth>
@@ -611,7 +611,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                             <span>/</span>
                             <span>{metadata.title || "Form Detail Hub"}</span>
                         </div>
-                        <h1 className="text-2xl font-bold tracking-tight text-ighub-black flex items-center gap-2">
+                        <h1 className="text-2xl  tracking-tight text-ighub-black flex items-center gap-2">
                             {metadata.title}
                         </h1>
                     </div>
@@ -683,7 +683,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                         <div className="p-2 bg-emerald-500 text-white rounded-full">
                                             <Check className="w-5 h-5" />
                                         </div>
-                                        <h3 className="font-bold text-lg">Form Updated Successfully!</h3>
+                                        <h3 className=" text-lg">Form Updated Successfully!</h3>
                                     </div>
                                     <p className="text-sm text-emerald-800">
                                         {submitStatus.message}
@@ -712,7 +712,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                 <div className="p-5 bg-rose-50 rounded-xl text-rose-950 flex gap-3 animate-in fade-in duration-300">
                                     <AlertCircle className="w-6 h-6 text-ighub-orange shrink-0 mt-0.5" />
                                     <div>
-                                        <h3 className="font-bold text-base">Error Saving Form</h3>
+                                        <h3 className=" text-base">Error Saving Form</h3>
                                         <p className="text-sm text-rose-800 mt-1">{submitStatus.message}</p>
                                     </div>
                                 </div>
@@ -725,7 +725,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                 >
                                     <AlertCircle className="w-6 h-6 text-ighub-orange shrink-0 mt-0.5" />
                                     <div>
-                                        <h3 className="font-bold text-base">Please fix the following issues:</h3>
+                                        <h3 className=" text-base">Please fix the following issues:</h3>
                                         <ul className="list-disc pl-5 mt-2 space-y-1 text-sm text-rose-800">
                                             {validationErrors.map((err, idx) => (
                                                 <li key={idx}>{err}</li>
@@ -739,7 +739,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                 {/* Metadata Section */}
                                 <div className="bg-white p-8 rounded-2xl relative overflow-hidden">
                                     <div className="flex items-center gap-2 mb-6">
-                                        <h2 className="text-xl font-bold tracking-tight text-ighub-black">
+                                        <h2 className="text-xl  tracking-tight text-ighub-black">
                                             Event & Page Metadata
                                         </h2>
                                     </div>
@@ -842,7 +842,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                             Base Price (NGN)
                                                         </label>
                                                         <div className="relative rounded-xl border border-gray-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-ighub-green">
-                                                            <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 font-bold text-sm">
+                                                            <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400  text-sm">
                                                                 ₦
                                                             </span>
                                                             <input
@@ -862,7 +862,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                             Discount/Early Bird Price (NGN)
                                                         </label>
                                                         <div className="relative rounded-xl border border-gray-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-ighub-green">
-                                                            <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 font-bold text-sm">
+                                                            <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400  text-sm">
                                                                 ₦
                                                             </span>
                                                             <input
@@ -888,11 +888,11 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                     <div className="flex justify-between items-center mb-6">
                                         <div className="flex items-center gap-2">
                                             {/* <Plus className="w-5 h-5 text-ighub-orange" /> */}
-                                            <h2 className="text-xl font-bold tracking-tight text-ighub-black">
+                                            <h2 className="text-xl  tracking-tight text-ighub-black">
                                                 Registration Form Schema
                                             </h2>
                                         </div>
-                                        <span className="bg-ighub-light text-ighub-black text-xs font-bold px-3 py-1.5 rounded-full border border-gray-200">
+                                        <span className="bg-ighub-light text-ighub-black text-xs  px-3 py-1.5 rounded-full border border-gray-200">
                                             {fields.length} Fields
                                         </span>
                                     </div>
@@ -919,7 +919,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                         >
                                                             <ArrowDown className="w-4 h-4" />
                                                         </button>
-                                                        <span className="text-xs font-bold text-gray-405">
+                                                        <span className="text-xs  text-gray-405">
                                                             Question {idx + 1}
                                                         </span>
                                                     </div>
@@ -951,7 +951,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                 {/* Inputs mapping */}
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                     <div className="md:col-span-2">
-                                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                                                        <label className="block text-xs  text-gray-500 uppercase tracking-wide mb-1.5">
                                                             Question Label
                                                         </label>
                                                         <input
@@ -963,7 +963,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                                                        <label className="block text-xs  text-gray-500 uppercase tracking-wide mb-1.5">
                                                             Field Type
                                                         </label>
                                                         <select
@@ -981,13 +981,13 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                 {field.type === "select" && (
                                                     <div className="mt-4 p-4 bg-white rounded-xl border border-gray-200 animate-in slide-in-from-top-2 duration-300">
                                                         <div className="flex justify-between items-center mb-3">
-                                                            <span className="text-xs font-bold text-gray-505 uppercase">
+                                                            <span className="text-xs  text-gray-505 uppercase">
                                                                 Dropdown Selections
                                                             </span>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => addOptionToField(field.id)}
-                                                                className="text-xs font-bold text-ighub-green hover:text-ighub-orange transition-colors flex items-center gap-1 cursor-pointer"
+                                                                className="text-xs  text-ighub-green hover:text-ighub-orange transition-colors flex items-center gap-1 cursor-pointer"
                                                             >
                                                                 <Plus className="w-3.5 h-3.5" />
                                                                 Add Option
@@ -997,7 +997,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                         <div className="space-y-2">
                                                             {field.options.map((opt, oIdx) => (
                                                                 <div key={oIdx} className="flex gap-2 items-center">
-                                                                    <span className="text-xs font-bold text-gray-400 w-4">
+                                                                    <span className="text-xs  text-gray-400 w-4">
                                                                         {oIdx + 1}.
                                                                     </span>
                                                                     <input
@@ -1039,7 +1039,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                     variant="primary"
                                     fullWidth
                                     disabled={isSubmitting}
-                                    className="font-bold py-4 text-base rounded-2xl cursor-pointer flex justify-center items-center gap-2 shadow-md hover:scale-[1.01] active:scale-[0.99] transition-transform"
+                                    className=" py-4 text-base rounded-2xl cursor-pointer flex justify-center items-center gap-2 shadow-md hover:scale-[1.01] active:scale-[0.99] transition-transform"
                                 >
                                     {isSubmitting ? (
                                         <>
@@ -1060,7 +1060,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                         <div className="lg:col-span-2">
                             <div className="sticky top-28 space-y-6">
                                 <div className="bg-white p-3 px-8 rounded-2xl flex justify-between items-center">
-                                    <span className="text-xs font-bold uppercase tracking-wide text-gray-500">Live Preview</span>
+                                    <span className="text-xs  uppercase tracking-wide text-gray-500">Live Preview</span>
                                     <div className="flex items-center bg-gray-150 p-0.5 rounded-lg">
                                         <button
                                             onClick={() => setPreviewDevice("desktop")}
@@ -1107,7 +1107,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                         <div className="p-8 space-y-6 flex-1 overflow-y-auto">
                                             {fields.map((field) => (
                                                 <div key={field.id} className="flex flex-col">
-                                                    <label className="text-xs font-bold tracking-wide text-gray-700 flex items-center gap-1">
+                                                    <label className="text-xs  tracking-wide text-gray-700 flex items-center gap-1">
                                                         {field.label}
                                                         {field.required && <span className="text-ighub-orange">*</span>}
                                                     </label>
@@ -1122,9 +1122,9 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
 
                                             {metadata.requires_payment && (
                                                 <div className="bg-ighub-purple text-white p-5 rounded-2xl shrink-0">
-                                                    <span className="text-[10px] font-bold uppercase tracking-tigher text-gray-300">Ticket Payment Required</span>
+                                                    <span className="text-[10px]  uppercase tracking-tigher text-gray-300">Ticket Payment Required</span>
                                                     <div className="flex items-baseline gap-2 mt-1.5">
-                                                        <span className="text-xl font-bold text-white">₦{(parseFloat(metadata.discount_price) || 0).toLocaleString()}</span>
+                                                        <span className="text-xl  text-white">₦{(parseFloat(metadata.discount_price) || 0).toLocaleString()}</span>
                                                         {parseFloat(metadata.base_price) > parseFloat(metadata.discount_price) && (
                                                             <span className="text-xs text-gray-405 line-through">₦{(parseFloat(metadata.base_price) || 0).toLocaleString()}</span>
                                                         )}
@@ -1144,7 +1144,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                     <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-3xs space-y-6 animate-in fade-in duration-300">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
-                                <h2 className="text-xl font-bold tracking-tight text-ighub-black flex items-center gap-2">
+                                <h2 className="text-xl  tracking-tight text-ighub-black flex items-center gap-2">
                                     {/* <Users className="w-5 h-5 text-ighub-green" /> */}
                                     Attendee Submissions Index
                                 </h2>
@@ -1193,7 +1193,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                             <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-3xs">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
-                                        <tr className="bg-ighub-light border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-tigher">
+                                        <tr className="bg-ighub-light border-b border-gray-200 text-xs  text-gray-500 uppercase tracking-tigher">
                                             <th className="px-6 py-4">Attendee Email</th>
                                             <th className="px-6 py-4">Date Registered</th>
                                             <th className="px-6 py-4">Payment Status</th>
@@ -1215,7 +1215,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                             {new Date(sub.created_at).toLocaleDateString()}
                                                         </td>
                                                         <td className="px-6 py-4">
-                                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tigher ${sub.payment_status === "paid"
+                                                            <span className={`px-2.5 py-1 rounded-full text-[10px]  uppercase tracking-tigher ${sub.payment_status === "paid"
                                                                 ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                                                 : sub.payment_status.startsWith("pending")
                                                                     ? "bg-amber-50 text-amber-700 border border-amber-200"
@@ -1224,7 +1224,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                                 {sub.payment_status.replace("_", " ")}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-4 text-xs font-mono font-bold text-ighub-purple">
+                                                        <td className="px-6 py-4 text-xs font-mono  text-ighub-purple">
                                                             {sub.staff_ref || <span className="text-gray-400 font-normal italic">None</span>}
                                                         </td>
                                                         <td className="px-6 py-4 text-right">
@@ -1253,7 +1253,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                                         {Object.entries(sub.answers || {}).map(([fieldId, val]) => (
                                                                             <div key={fieldId} className="flex flex-col text-xs p-2.5 bg-ighub-light rounded-lg border border-gray-150">
-                                                                                <span className="font-bold text-gray-500 mb-1">
+                                                                                <span className=" text-gray-500 mb-1">
                                                                                     {getLabelForFieldId(fieldId)}
                                                                                 </span>
                                                                                 <span className="font-semibold text-ighub-black text-sm">
@@ -1286,7 +1286,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
 
                             <div className="flex items-center gap-2 mb-6">
                                 {/* <Share2 className="w-5 h-5 text-ighub-purple" /> */}
-                                <h2 className="text-xl font-bold tracking-tight text-ighub-black">
+                                <h2 className="text-xl  tracking-tight text-ighub-black">
                                     Register Promoter / Referral Candidate
                                 </h2>
                             </div>
@@ -1300,7 +1300,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
 
                             <form onSubmit={handleRegisterPromoter} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                                 <div>
-                                    <label htmlFor="p_name" className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                                    <label htmlFor="p_name" className="block text-xs  text-gray-500 uppercase tracking-wide mb-1.5">
                                         Promoter Full Name
                                     </label>
                                     <input
@@ -1315,7 +1315,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                 </div>
 
                                 <div>
-                                    <label htmlFor="p_code" className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                                    <label htmlFor="p_code" className="block text-xs  text-gray-500 uppercase tracking-wide mb-1.5">
                                         Referral Code (Slug Value)
                                     </label>
                                     <input
@@ -1337,7 +1337,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
 
                         {/* Promoters List */}
                         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-3xs space-y-6">
-                            <h3 className="text-lg font-bold tracking-tight text-ighub-black flex items-center gap-2">
+                            <h3 className="text-lg  tracking-tight text-ighub-black flex items-center gap-2">
                                 {/* <Users className="w-5 h-5 text-ighub-green" /> */}
                                 Registered Promoters Directory
                             </h3>
@@ -1365,14 +1365,14 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                 <div className="space-y-4">
                                                     <div className="flex justify-between items-start gap-4">
                                                         <div>
-                                                            <h4 className="font-extrabold text-sm text-ighub-black leading-snug">
+                                                            <h4 className="text-sm text-ighub-black leading-snug">
                                                                 {p.name}
                                                             </h4>
                                                             <span className="text-[10px] text-gray-450 font-semibold tracking-tigher font-mono">
                                                                 Code: {cleanCode}
                                                             </span>
                                                         </div>
-                                                        <span className="bg-white border border-gray-200 text-ighub-purple text-xs font-extrabold px-3 py-1 rounded-full shadow-3xs flex items-center gap-1">
+                                                        <span className="bg-white border border-gray-200 text-ighub-purple text-xs px-3 py-1 rounded-full shadow-3xs flex items-center gap-1">
                                                             {p.referral_count} Regs
                                                         </span>
                                                     </div>
@@ -1427,7 +1427,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                             <AlertCircle className="w-8 h-8" />
                         </div>
                         <div className="space-y-2">
-                            <h3 className="text-xl font-bold text-ighub-black">Confirm Form Update</h3>
+                            <h3 className="text-xl  text-ighub-black">Confirm Form Update</h3>
                             <p className="text-xs text-gray-500 leading-relaxed">
                                 Are you sure you want to save and publish these changes to this registration form? Any edits to fields, deadlines, or pricing settings will take effect immediately.
                             </p>
