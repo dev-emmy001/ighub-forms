@@ -3,11 +3,38 @@ import FormRenderer from "@/components/form-renderer";
 import CountdownTimer from "@/components/countdown-timer";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 
-// Next.js passes the URL parameters (like the slug) into the page props automatically
-export default async function DynamicFormPage({ params }: { params: Promise<{ slug: string }> }) {
+// Next.js passes the URL parameters (like the slug) and query params into the page props automatically
+export default async function DynamicFormPage({
+    params,
+    searchParams
+}: {
+    params: Promise<{ slug: string }>;
+    searchParams: Promise<{ ref?: string }>;
+}) {
     const { slug } = await params;
+    const { ref } = await searchParams;
 
-    // 1. Fetch the specific form configuration from the database
+    // 1. If ref code is present, increment click count on the promoter's record
+    if (ref) {
+        const cleanRef = ref.trim().toLowerCase();
+        
+        // Fetch the promoter matching the code
+        const { data: promoter } = await supabase
+            .from("promoters")
+            .select("id, clicks")
+            .eq("code", cleanRef)
+            .maybeSingle();
+
+        if (promoter) {
+            // Increment the clicks count
+            await supabase
+                .from("promoters")
+                .update({ clicks: (promoter.clicks || 0) + 1 })
+                .eq("id", promoter.id);
+        }
+    }
+
+    // 2. Fetch the specific form configuration from the database
     const { data: formConfig, error } = await supabase
         .from("forms")
         .select("*")
@@ -58,7 +85,7 @@ export default async function DynamicFormPage({ params }: { params: Promise<{ sl
                 </div>
 
                 {/* The Form Engine Component */}
-                <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                <div className="bg-white p-8 rounded-xl border border-gray-100">
                     {/* We pass the JSON array directly into the schema prop */}
                     <FormRenderer
                         schema={formConfig.form_schema}

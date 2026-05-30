@@ -34,7 +34,7 @@ export default function FormRenderer({ schema, requiresPayment, formId, onSubmit
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setStatus({});
-        
+
         if (onSubmit) {
             onSubmit(answers);
             return;
@@ -161,11 +161,10 @@ export default function FormRenderer({ schema, requiresPayment, formId, onSubmit
                         Select Ticket Payment Method
                     </label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                            paymentMethod === "paystack"
+                        <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === "paystack"
                                 ? "bg-white border-ighub-green text-ighub-black font-semibold"
                                 : "bg-white/50 border-gray-200 text-gray-500"
-                        }`}>
+                            }`}>
                             <input
                                 type="radio"
                                 name="payment_method"
@@ -175,9 +174,8 @@ export default function FormRenderer({ schema, requiresPayment, formId, onSubmit
                                 className="sr-only"
                                 disabled={isSubmitting}
                             />
-                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                                paymentMethod === "paystack" ? "border-ighub-green" : "border-gray-300"
-                            }`}>
+                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${paymentMethod === "paystack" ? "border-ighub-green" : "border-gray-300"
+                                }`}>
                                 {paymentMethod === "paystack" && <div className="w-2.5 h-2.5 rounded-full bg-ighub-green"></div>}
                             </div>
                             <div className="flex flex-col">
@@ -186,11 +184,10 @@ export default function FormRenderer({ schema, requiresPayment, formId, onSubmit
                             </div>
                         </label>
 
-                        <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                            paymentMethod === "cash"
+                        <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === "cash"
                                 ? "bg-white border-ighub-green text-ighub-black font-semibold"
                                 : "bg-white/50 border-gray-200 text-gray-500"
-                        }`}>
+                            }`}>
                             <input
                                 type="radio"
                                 name="payment_method"
@@ -200,9 +197,8 @@ export default function FormRenderer({ schema, requiresPayment, formId, onSubmit
                                 className="sr-only"
                                 disabled={isSubmitting}
                             />
-                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                                paymentMethod === "cash" ? "border-ighub-green" : "border-gray-300"
-                            }`}>
+                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${paymentMethod === "cash" ? "border-ighub-green" : "border-gray-300"
+                                }`}>
                                 {paymentMethod === "cash" && <div className="w-2.5 h-2.5 rounded-full bg-ighub-green"></div>}
                             </div>
                             <div className="flex flex-col">
@@ -230,4 +226,4 @@ export default function FormRenderer({ schema, requiresPayment, formId, onSubmit
             </div>
         </form>
     );
-}
+}
