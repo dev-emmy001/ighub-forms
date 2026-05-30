@@ -57,7 +57,7 @@ function LoginForm() {
 
             {/* Email Input */}
             <div className="space-y-2">
-                <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-gray-500">
+                <label htmlFor="email" className="block text-xs font-bold uppercase tracking-tigher text-gray-500">
                     Staff Email Address
                 </label>
                 <div className="relative flex rounded-xl border border-gray-250 bg-ighub-light focus-within:ring-2 focus-within:ring-ighub-green overflow-hidden transition-all">
@@ -79,7 +79,7 @@ function LoginForm() {
 
             {/* Password Input */}
             <div className="space-y-2">
-                <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-gray-500">
+                <label htmlFor="password" className="block text-xs font-bold uppercase tracking-tigher text-gray-500">
                     Console Password
                 </label>
                 <div className="relative flex rounded-xl border border-gray-250 bg-ighub-light focus-within:ring-2 focus-within:ring-ighub-green overflow-hidden transition-all">
@@ -150,7 +150,7 @@ export default function LoginPage() {
                 <div className="text-center">
                     <a
                         href="/"
-                        className="text-xs font-bold text-gray-400 hover:text-ighub-purple transition-colors uppercase tracking-wider"
+                        className="text-xs font-bold text-gray-400 hover:text-ighub-purple transition-colors uppercase tracking-tigher"
                     >
                         Back
                     </a>

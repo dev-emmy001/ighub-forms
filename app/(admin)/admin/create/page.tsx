@@ -901,7 +901,7 @@ export default function CreateFormPage() {
 
                                 {/* Form Header Preview */}
                                 <div className="p-8 bg-ighub-light/40 border-b border-gray-100 text-center shrink-0">
-                                    {/* <span className="inline-block bg-white text-ighub-green border border-ighub-green text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-3 shadow-3xs">
+                                    {/* <span className="inline-block bg-white text-ighub-green border border-ighub-green text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-tigher mb-3 shadow-3xs">
                                         Registration Live
                                     </span> */}
                                     <h2 className="text-xl font-black text-ighub-black leading-snug balance max-w-sm mx-auto">
@@ -984,7 +984,7 @@ export default function CreateFormPage() {
                                                 <div>
                                                     <div className="flex items-center gap-1.5">
                                                         {/* <CreditCard className="w-4 h-4 text-ighub-green" /> */}
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">
+                                                        <span className="text-[10px] font-bold uppercase tracking-tigher text-gray-300">
                                                             Ticket Payment Required
                                                         </span>
                                                     </div>

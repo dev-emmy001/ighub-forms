@@ -14,7 +14,7 @@ export default async function PartnersAdminPage() {
 
     if (formError || !registrationForm) {
         return (
-            <main className="min-h-screen bg-ighub-light flex items-center justify-center p-6 font-sans">
+            <main className="min-h-screen bg-ighub-light flex items-center justify-center p-6 ">
                 <div className="max-w-md w-full bg-white p-8 rounded-3xl border border-gray-100 shadow-xs text-center space-y-6">
                     <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 mx-auto text-xl font-bold">!</div>
                     <div>
@@ -40,7 +40,7 @@ export default async function PartnersAdminPage() {
 
     if (subError) {
         return (
-            <main className="min-h-screen bg-ighub-light flex items-center justify-center p-6 font-sans">
+            <main className="min-h-screen bg-ighub-light flex items-center justify-center p-6 ">
                 <div className="max-w-md w-full bg-white p-8 rounded-3xl border border-gray-150 shadow-xs text-center space-y-6">
                     <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 mx-auto text-xl font-bold">X</div>
                     <div>
@@ -71,17 +71,17 @@ export default async function PartnersAdminPage() {
         .select("email, form_id, code");
 
     return (
-        <main className="min-h-screen bg-ighub-light text-ighub-black flex flex-col font-sans">
+        <main className="min-h-screen bg-ighub-light text-ighub-black flex flex-col ">
             {/* Header Area */}
             <header className="bg-white px-6 py-4 sticky top-0 z-30 border-b border-gray-100 shadow-3xs">
                 <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-tigher text-gray-400 mb-1">
                             <span className="text-ighub-purple">Admin Portal</span>
                             <span>/</span>
                             <span>Affiliates</span>
                         </div>
-                        <h1 className="text-2xl font-black tracking-tight text-ighub-black">
+                        <h1 className="text-2xl text-ighub-black">
                             Partner Applications Console
                         </h1>
                     </div>

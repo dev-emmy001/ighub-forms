@@ -577,7 +577,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
             <main className="min-h-screen bg-ighub-light flex items-center justify-center">
                 <div className="text-center space-y-4">
                     <Loader2 className="w-10 h-10 animate-spin text-ighub-green mx-auto" />
-                    <p className="text-sm font-semibold text-gray-500 font-sans">Loading form settings...</p>
+                    <p className="text-sm font-semibold text-gray-500 ">Loading form settings...</p>
                 </div>
             </main>
         );
@@ -585,7 +585,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
 
     if (fetchError) {
         return (
-            <main className="min-h-screen bg-ighub-light flex items-center justify-center p-6 font-sans">
+            <main className="min-h-screen bg-ighub-light flex items-center justify-center p-6 ">
                 <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-gray-100 shadow-xs text-center space-y-6">
                     <AlertCircle className="w-12 h-12 text-ighub-orange mx-auto" />
                     <div>
@@ -606,7 +606,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
             <header className="bg-white px-6 py-4 sticky top-0 z-30">
                 <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-tigher text-gray-500 mb-1">
                             <span className="text-ighub-purple">Admin Portal</span>
                             <span>/</span>
                             <span>{metadata.title || "Form Detail Hub"}</span>
@@ -1122,7 +1122,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
 
                                             {metadata.requires_payment && (
                                                 <div className="bg-ighub-purple text-white p-5 rounded-2xl shrink-0">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Ticket Payment Required</span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-tigher text-gray-300">Ticket Payment Required</span>
                                                     <div className="flex items-baseline gap-2 mt-1.5">
                                                         <span className="text-xl font-bold text-white">₦{(parseFloat(metadata.discount_price) || 0).toLocaleString()}</span>
                                                         {parseFloat(metadata.base_price) > parseFloat(metadata.discount_price) && (
@@ -1193,7 +1193,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                             <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-3xs">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
-                                        <tr className="bg-ighub-light border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        <tr className="bg-ighub-light border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-tigher">
                                             <th className="px-6 py-4">Attendee Email</th>
                                             <th className="px-6 py-4">Date Registered</th>
                                             <th className="px-6 py-4">Payment Status</th>
@@ -1215,7 +1215,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                             {new Date(sub.created_at).toLocaleDateString()}
                                                         </td>
                                                         <td className="px-6 py-4">
-                                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${sub.payment_status === "paid"
+                                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tigher ${sub.payment_status === "paid"
                                                                 ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                                                 : sub.payment_status.startsWith("pending")
                                                                     ? "bg-amber-50 text-amber-700 border border-amber-200"
@@ -1247,7 +1247,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                         <tr className="bg-ighub-light/40">
                                                             <td colSpan={5} className="px-8 py-5 border-t border-gray-200">
                                                                 <div className="bg-white p-5 rounded-xl border border-gray-150 space-y-3">
-                                                                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
+                                                                    <h4 className="text-xs font-extrabold uppercase tracking-tigher text-gray-400 border-b border-gray-100 pb-2">
                                                                         Registration Questionnaire Responses
                                                                     </h4>
                                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1368,7 +1368,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                             <h4 className="font-extrabold text-sm text-ighub-black leading-snug">
                                                                 {p.name}
                                                             </h4>
-                                                            <span className="text-[10px] text-gray-450 font-semibold tracking-wider font-mono">
+                                                            <span className="text-[10px] text-gray-450 font-semibold tracking-tigher font-mono">
                                                                 Code: {cleanCode}
                                                             </span>
                                                         </div>

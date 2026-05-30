@@ -256,7 +256,7 @@ export default function AdminDashboardPage() {
                                             type="button"
                                             onClick={() => handleToggleActive(form.id, form.is_active)}
                                             disabled={togglingId === form.id}
-                                            className={`px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1 ${form.is_active
+                                            className={`px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-tigher transition-all cursor-pointer flex items-center gap-1 ${form.is_active
                                                 ? "bg-emerald-50 text-emerald-700"
                                                 : "bg-gray-100 text-gray-500 border border-gray-200"
                                                 }`}
