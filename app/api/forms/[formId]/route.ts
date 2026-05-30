@@ -66,6 +66,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ formId: 
             discount_price,
             form_schema,
             closes_at,
+            discount_closes_at,
         } = body;
 
         // 1. Validation
@@ -134,6 +135,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ formId: 
             discount_price: requires_payment ? parseFloat(discount_price) || 0 : 0,
             form_schema: form_schema,
             closes_at: closes_at ? new Date(closes_at).toISOString() : null,
+            discount_closes_at: discount_closes_at ? new Date(discount_closes_at).toISOString() : null,
             updated_at: new Date().toISOString(),
         };
 

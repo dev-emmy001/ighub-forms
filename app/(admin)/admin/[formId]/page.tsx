@@ -50,6 +50,7 @@ interface EventMetadata {
     base_price: string;
     discount_price: string;
     closes_at: string;
+    discount_closes_at?: string;
 }
 
 interface Submission {
@@ -99,6 +100,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
         base_price: "0",
         discount_price: "0",
         closes_at: "",
+        discount_closes_at: "",
     });
     const [fields, setFields] = useState<FormField[]>([]);
 
@@ -164,6 +166,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                     base_price: String(data.base_price ?? 0),
                     discount_price: String(data.discount_price ?? 0),
                     closes_at: formatDatetimeLocal(data.closes_at),
+                    discount_closes_at: formatDatetimeLocal(data.discount_closes_at),
                 });
                 setFields(data.form_schema || []);
             } catch (err: any) {
@@ -528,6 +531,7 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                     discount_price: metadata.discount_price,
                     form_schema: fields,
                     closes_at: metadata.closes_at || null,
+                    discount_closes_at: metadata.discount_closes_at || null,
                 }),
             });
 
@@ -836,45 +840,64 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                             </div>
 
                                             {metadata.requires_payment && (
-                                                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6 p-6 bg-ighub-light rounded-xl border border-gray-200 animate-in slide-in-from-top duration-300">
-                                                    <div>
-                                                        <label htmlFor="base_price" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
-                                                            Base Price (NGN)
-                                                        </label>
-                                                        <div className="relative rounded-xl border border-gray-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-ighub-green">
-                                                            <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400  text-sm">
-                                                                ₦
-                                                            </span>
-                                                            <input
-                                                                type="number"
-                                                                id="base_price"
-                                                                name="base_price"
-                                                                min="0"
-                                                                value={metadata.base_price}
-                                                                onChange={handleMetadataChange}
-                                                                className="w-full pl-8 pr-4 py-3 border-0 focus:outline-none text-ighub-black text-sm"
-                                                            />
+                                                <div className="mt-6 space-y-6 p-6 bg-ighub-light rounded-xl border border-gray-200 animate-in slide-in-from-top duration-300">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                                        <div>
+                                                            <label htmlFor="base_price" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
+                                                                Base Price (NGN)
+                                                            </label>
+                                                            <div className="relative rounded-xl border border-gray-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-ighub-green">
+                                                                <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400  text-sm">
+                                                                    ₦
+                                                                </span>
+                                                                <input
+                                                                    type="number"
+                                                                    id="base_price"
+                                                                    name="base_price"
+                                                                    min="0"
+                                                                    value={metadata.base_price}
+                                                                    onChange={handleMetadataChange}
+                                                                    className="w-full pl-8 pr-4 py-3 border-0 focus:outline-none text-ighub-black text-sm"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div>
+                                                            <label htmlFor="discount_price" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
+                                                                Discount/Early Bird Price (NGN)
+                                                            </label>
+                                                            <div className="relative rounded-xl border border-gray-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-ighub-green">
+                                                                <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400  text-sm">
+                                                                    ₦
+                                                                </span>
+                                                                <input
+                                                                    type="number"
+                                                                    id="discount_price"
+                                                                    name="discount_price"
+                                                                    min="0"
+                                                                    value={metadata.discount_price}
+                                                                    onChange={handleMetadataChange}
+                                                                    className="w-full pl-8 pr-4 py-3 border-0 focus:outline-none text-ighub-black text-sm"
+                                                                />
+                                                            </div>
                                                         </div>
                                                     </div>
 
-                                                    <div>
-                                                        <label htmlFor="discount_price" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
-                                                            Discount/Early Bird Price (NGN)
+                                                    <div className="border-t border-gray-200/60 pt-4">
+                                                        <label htmlFor="discount_closes_at" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
+                                                            Discount/Early Bird Deadline
                                                         </label>
-                                                        <div className="relative rounded-xl border border-gray-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-ighub-green">
-                                                            <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400  text-sm">
-                                                                ₦
-                                                            </span>
-                                                            <input
-                                                                type="number"
-                                                                id="discount_price"
-                                                                name="discount_price"
-                                                                min="0"
-                                                                value={metadata.discount_price}
-                                                                onChange={handleMetadataChange}
-                                                                className="w-full pl-8 pr-4 py-3 border-0 focus:outline-none text-ighub-black text-sm"
-                                                            />
-                                                        </div>
+                                                        <input
+                                                            type="datetime-local"
+                                                            id="discount_closes_at"
+                                                            name="discount_closes_at"
+                                                            value={metadata.discount_closes_at || ""}
+                                                            onChange={handleMetadataChange}
+                                                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-ighub-green text-sm"
+                                                        />
+                                                        <p className="mt-1.5 text-xs text-gray-500">
+                                                            Sets a timer on the form page. When this date passes, the form automatically disables the discount price and charges the base price. Leave blank if open indefinitely.
+                                                        </p>
                                                     </div>
                                                 </div>
                                             )}
@@ -1119,16 +1142,20 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                     />
                                                 </div>
                                             ))}
-
                                             {metadata.requires_payment && (
                                                 <div className="bg-ighub-purple text-white p-5 rounded-2xl shrink-0">
-                                                    <span className="text-[10px]  uppercase tracking-tigher text-gray-300">Ticket Payment Required</span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Ticket Payment Required</span>
                                                     <div className="flex items-baseline gap-2 mt-1.5">
-                                                        <span className="text-xl  text-white">₦{(parseFloat(metadata.discount_price) || 0).toLocaleString()}</span>
+                                                        <span className="text-xl font-bold text-white">₦{(parseFloat(metadata.discount_price) || 0).toLocaleString()}</span>
                                                         {parseFloat(metadata.base_price) > parseFloat(metadata.discount_price) && (
                                                             <span className="text-xs text-gray-405 line-through">₦{(parseFloat(metadata.base_price) || 0).toLocaleString()}</span>
                                                         )}
                                                     </div>
+                                                    {metadata.discount_closes_at && (
+                                                        <div className="mt-3 pt-3 border-t border-white/10 text-[10px] text-gray-300 font-semibold">
+                                                            Early Bird closes: {new Date(metadata.discount_closes_at).toLocaleString()}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>

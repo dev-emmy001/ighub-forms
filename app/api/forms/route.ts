@@ -15,6 +15,7 @@ export async function POST(req: Request) {
             discount_price,
             form_schema,
             closes_at,
+            discount_closes_at,
         } = body;
 
         // 1. Simple validation
@@ -78,6 +79,7 @@ export async function POST(req: Request) {
             discount_price: requires_payment ? parseFloat(discount_price) || 0 : 0,
             form_schema: form_schema,
             closes_at: closes_at ? new Date(closes_at).toISOString() : null,
+            discount_closes_at: discount_closes_at ? new Date(discount_closes_at).toISOString() : null,
             is_active: true,
             created_at: new Date().toISOString(),
         };
