@@ -16,6 +16,8 @@ interface FormField {
 interface FormRendererProps {
     schema: FormField[];
     formId: string; // Passed by public page
+    title?: string;
+    description?: string;
     onSubmit?: (data: Record<string, any>) => void;
 }
 
@@ -190,7 +192,7 @@ function FileUploadField({ fieldId, label, required, onChange, disabled }: FileU
     );
 }
 
-export default function FormRenderer({ schema, formId, onSubmit }: FormRendererProps) {
+export default function FormRenderer({ schema, formId, title, description, onSubmit }: FormRendererProps) {
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [status, setStatus] = useState<{ success?: boolean; message?: string }>({});
@@ -260,9 +262,26 @@ export default function FormRenderer({ schema, formId, onSubmit }: FormRendererP
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8 max-w-xl mx-auto w-full">
-            {status.success === false && (
-                <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-950 flex gap-3 text-sm">
+        <div className="max-w-xl mx-auto w-full space-y-8 animate-in fade-in duration-300">
+            {/* Header Section */}
+            {(title || description) && (
+                <div className="text-center pb-6 border-b border-gray-100">
+                    {title && (
+                        <h1 className="text-xl font-bold text-ighub-black tracking-tight mb-3">
+                            {title}
+                        </h1>
+                    )}
+                    {description && (
+                        <p className="text-sm text-gray-500 leading-relaxed text-left whitespace-pre-wrap max-w-md mx-auto">
+                            {description}
+                        </p>
+                    )}
+                </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-8">
+                {status.success === false && (
+                    <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-950 flex gap-3 text-sm">
                     <AlertCircle className="w-5 h-5 text-ighub-orange shrink-0" />
                     <span>{status.message}</span>
                 </div>
@@ -338,6 +357,7 @@ export default function FormRenderer({ schema, formId, onSubmit }: FormRendererP
                     )}
                 </Button>
             </div>
-        </form>
+            </form>
+        </div>
     );
 }

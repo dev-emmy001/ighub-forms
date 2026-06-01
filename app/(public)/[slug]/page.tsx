@@ -72,24 +72,14 @@ export default async function DynamicFormPage({
             )}
 
             <div className="max-w-2xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-12 space-y-8 flex-1">
-                {/* Header Section */}
-                <div className="text-center mb-4">
-                    <h1 className="text-lg font-bold text-ighub-black tracking-tight mb-4">
-                        {formConfig.title}
-                    </h1>
-                    {formConfig.description && (
-                        <p className="text-sm text-gray-600">
-                            {formConfig.description}
-                        </p>
-                    )}
-                </div>
-
                 {/* The Form Engine Component */}
                 <div className="bg-white p-8 rounded-xl border border-gray-100">
                     {/* We pass the JSON array directly into the schema prop */}
                     <FormRenderer
                         schema={formConfig.form_schema}
                         formId={formConfig.id} // Passing ID so the renderer knows where to post the data
+                        title={formConfig.title}
+                        description={formConfig.description}
                     />
                 </div>
             </div>
