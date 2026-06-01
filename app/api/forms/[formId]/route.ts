@@ -130,13 +130,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ formId: 
             title: title.trim(),
             slug: slug.trim(),
             description: description ? description.trim() : '',
-            requires_payment: !!requires_payment,
-            base_price: requires_payment ? parseFloat(base_price) || 0 : 0,
-            discount_price: requires_payment ? parseFloat(discount_price) || 0 : 0,
             form_schema: form_schema,
             closes_at: closes_at ? new Date(closes_at).toISOString() : null,
-            discount_closes_at: discount_closes_at ? new Date(discount_closes_at).toISOString() : null,
             updated_at: new Date().toISOString(),
+            send_email_response: !!body.send_email_response,
+            email_response_message: body.email_response_message ? body.email_response_message.trim() : '',
         };
 
         // 4. Update in Supabase

@@ -33,7 +33,7 @@ export async function GET(req: Request) {
         // 2. Fetch the assigned campaign/form details
         const { data: form, error: formError } = await supabaseAdmin
             .from('forms')
-            .select('id, title, slug, requires_payment, base_price, discount_price')
+            .select('id, title, slug')
             .eq('id', promoter.form_id)
             .single();
 
@@ -64,13 +64,11 @@ export async function GET(req: Request) {
             return status === 'paid' || status === 'approved' || status === 'approved_partner' || status === 'not_required';
         });
 
-        // 5. Calculate payout (e.g., 10% commission on the ticket price for each successful paid registration)
-        // If the form has a discount price, we use it, otherwise base price, defaulting to 50,000 NGN if not specified
-        const ticketPrice = form ? (form.discount_price || form.base_price || 0) : 50000;
-        const commissionRate = 0.10; // 10% commission rate
+        const ticketPrice = 0;
+        const commissionRate = 0.00;
         
-        // Payout is calculated dynamically based on successful sales
-        const totalPayoutEarned = successfulSales.length * (ticketPrice * commissionRate);
+        // Payout is 0 since all registrations are free/payments are reverted
+        const totalPayoutEarned = 0;
 
         return NextResponse.json({
             success: true,

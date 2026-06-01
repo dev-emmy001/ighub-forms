@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import FormRenderer from "@/components/form-renderer";
 import CountdownTimer from "@/components/countdown-timer";
-import TicketPriceCard from "@/components/ticket-price-card";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 
 // Next.js passes the URL parameters (like the slug) and query params into the page props automatically
@@ -85,21 +84,11 @@ export default async function DynamicFormPage({
                     )}
                 </div>
 
-                {/* Ticket Price Display if Requires Payment */}
-                {formConfig.requires_payment && (
-                    <TicketPriceCard
-                        basePrice={formConfig.base_price}
-                        discountPrice={formConfig.discount_price}
-                        discountClosesAt={formConfig.discount_closes_at}
-                    />
-                )}
-
                 {/* The Form Engine Component */}
                 <div className="bg-white p-8 rounded-xl border border-gray-100">
                     {/* We pass the JSON array directly into the schema prop */}
                     <FormRenderer
                         schema={formConfig.form_schema}
-                        requiresPayment={formConfig.requires_payment}
                         formId={formConfig.id} // Passing ID so the renderer knows where to post the data
                     />
                 </div>

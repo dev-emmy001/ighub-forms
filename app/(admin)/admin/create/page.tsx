@@ -27,7 +27,7 @@ import {
 // Interface as requested
 interface FormField {
     id: string; // crypto.randomUUID()
-    type: 'text' | 'number' | 'select';
+    type: 'text' | 'number' | 'select' | 'file';
     label: string;
     required: boolean;
     options: string[]; // only used if type is 'select'
@@ -37,10 +37,9 @@ interface EventMetadata {
     title: string;
     slug: string;
     description: string;
-    requires_payment: boolean;
-    base_price: string;
-    discount_price: string;
     closes_at: string;
+    send_email_response: boolean;
+    email_response_message: string;
 }
 
 export default function CreateFormPage() {
@@ -63,10 +62,9 @@ export default function CreateFormPage() {
         title: "",
         slug: "",
         description: "",
-        requires_payment: false,
-        base_price: "0",
-        discount_price: "0",
         closes_at: "",
+        send_email_response: false,
+        email_response_message: "",
     });
 
     const [fields, setFields] = useState<FormField[]>([
@@ -130,12 +128,7 @@ export default function CreateFormPage() {
         }
     };
 
-    const handlePaymentToggle = () => {
-        setMetadata((prev) => ({
-            ...prev,
-            requires_payment: !prev.requires_payment,
-        }));
-    };
+    // No payment toggle needed
 
     // 4. Form Fields Schema Handlers
     const addField = () => {
@@ -249,20 +242,7 @@ export default function CreateFormPage() {
             }
         }
 
-        if (metadata.requires_payment) {
-            const base = parseFloat(metadata.base_price);
-            const discount = parseFloat(metadata.discount_price);
-
-            if (isNaN(base) || base < 0) {
-                errors.push("Base Price must be a valid number greater than or equal to 0.");
-            }
-            if (isNaN(discount) || discount < 0) {
-                errors.push("Discount Price must be a valid number greater than or equal to 0.");
-            }
-            if (!isNaN(base) && !isNaN(discount) && discount > base) {
-                errors.push("Discount Price cannot exceed the Base Price.");
-            }
-        }
+        // No payment validation needed
 
         if (fields.length === 0) {
             errors.push("You must add at least one question field to the form.");
@@ -314,11 +294,10 @@ export default function CreateFormPage() {
                     title: metadata.title,
                     slug: metadata.slug,
                     description: metadata.description,
-                    requires_payment: metadata.requires_payment,
-                    base_price: metadata.base_price,
-                    discount_price: metadata.discount_price,
                     form_schema: fields,
                     closes_at: metadata.closes_at || null,
+                    send_email_response: metadata.send_email_response,
+                    email_response_message: metadata.email_response_message,
                 }),
             });
 
@@ -339,10 +318,9 @@ export default function CreateFormPage() {
                 title: "",
                 slug: "",
                 description: "",
-                requires_payment: false,
-                base_price: "0",
-                discount_price: "0",
                 closes_at: "",
+                send_email_response: false,
+                email_response_message: "",
             });
             setFields([
                 {
@@ -561,77 +539,47 @@ export default function CreateFormPage() {
                                     </p>
                                 </div>
 
-                                {/* Payment Requirements Toggle */}
-                                <div className="pt-4 border-t border-gray-100">
+                                {/* Email Automation Options */}
+                                <div className="pt-6 border-t border-gray-150 space-y-6">
                                     <div className="flex items-center justify-between">
                                         <div className="flex flex-col">
-                                            <span className="text-sm font-semibold tracking-wide text-ighub-black">
-                                                Requires Ticket Payment
+                                            <span className="text-sm font-semibold text-ighub-black">
+                                                Send Automatic Email Response
                                             </span>
-                                            <span className="text-xs text-gray-500 mt-0.5">
-                                                Toggle if users must complete online payment (via Paystack/Cash) to complete registration
+                                            <span className="text-xs text-gray-550 mt-1">
+                                                Toggle to automatically send a custom reply to the submitter's email upon form submission.
                                             </span>
                                         </div>
                                         <button
                                             type="button"
-                                            onClick={handlePaymentToggle}
-                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${metadata.requires_payment ? "bg-ighub-green" : "bg-gray-200"
+                                            onClick={() => setMetadata(prev => ({ ...prev, send_email_response: !prev.send_email_response }))}
+                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${metadata.send_email_response ? "bg-ighub-green" : "bg-gray-200"
                                                 }`}
                                         >
                                             <span
-                                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${metadata.requires_payment ? "translate-x-5" : "translate-x-0"
+                                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-3xs transition duration-200 ease-in-out ${metadata.send_email_response ? "translate-x-5" : "translate-x-0"
                                                     }`}
                                             />
                                         </button>
                                     </div>
 
-                                    {/* Payment Fields (Visible if requires_payment is active) */}
-                                    {metadata.requires_payment && (
-                                        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6 p-6 bg-ighub-light rounded-xl border border-gray-200 animate-in slide-in-from-top duration-300">
-                                            <div>
-                                                <label htmlFor="base_price" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
-                                                    Base Price (NGN)
-                                                </label>
-                                                <div className="relative rounded-xl border border-gray-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-ighub-green">
-                                                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 font-bold text-sm">
-                                                        ₦
-                                                    </span>
-                                                    <input
-                                                        type="number"
-                                                        id="base_price"
-                                                        name="base_price"
-                                                        min="0"
-                                                        value={metadata.base_price}
-                                                        onChange={handleMetadataChange}
-                                                        className="w-full pl-8 pr-4 py-3 border-0 focus:outline-none text-ighub-black text-sm"
-                                                        placeholder="5000"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label htmlFor="discount_price" className="block text-sm font-semibold tracking-wide text-ighub-black mb-2">
-                                                    Discount/Early Bird Price (NGN)
-                                                </label>
-                                                <div className="relative rounded-xl border border-gray-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-ighub-green">
-                                                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 font-bold text-sm">
-                                                        ₦
-                                                    </span>
-                                                    <input
-                                                        type="number"
-                                                        id="discount_price"
-                                                        name="discount_price"
-                                                        min="0"
-                                                        value={metadata.discount_price}
-                                                        onChange={handleMetadataChange}
-                                                        className="w-full pl-8 pr-4 py-3 border-0 focus:outline-none text-ighub-black text-sm"
-                                                        placeholder="3000"
-                                                    />
-                                                </div>
-                                                <p className="mt-1 text-[11px] text-gray-500">
-                                                    Set to matching base price if no discount.
-                                                </p>
-                                            </div>
+                                    {metadata.send_email_response && (
+                                        <div className="space-y-3 animate-in slide-in-from-top duration-300">
+                                            <label htmlFor="email_response_message" className="block text-xs font-bold text-gray-550 uppercase tracking-wide">
+                                                Custom Auto-Reply Email Message
+                                            </label>
+                                            <textarea
+                                                id="email_response_message"
+                                                name="email_response_message"
+                                                value={metadata.email_response_message}
+                                                onChange={handleMetadataChange}
+                                                rows={5}
+                                                className="w-full px-4 py-3 bg-ighub-light border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-ighub-green text-sm resize-y"
+                                                placeholder={`Hi {name},\n\nThank you for registering for {form_title}! We have successfully received your details.\n\nBest regards,\nThe Team`}
+                                            />
+                                            <p className="text-[11px] text-gray-550 leading-normal">
+                                                Use placeholders like <strong>{"{name}"}</strong> (replaced by submitter name), <strong>{"{form_title}"}</strong> (replaced by form title), or any field name like <strong>{"{School Name}"}</strong> to customize the message.
+                                            </p>
                                         </div>
                                     )}
                                 </div>
@@ -753,6 +701,7 @@ export default function CreateFormPage() {
                                                         <option value="text">Text Response</option>
                                                         <option value="number">Numeric Answer</option>
                                                         <option value="select">Dropdown Menu (Select)</option>
+                                                        <option value="file">File/Media Upload</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -974,37 +923,14 @@ export default function CreateFormPage() {
                                                     </select>
                                                 </div>
                                             )}
+
+                                            {field.type === "file" && (
+                                                <div className="w-full p-4 mt-2 bg-ighub-light border-2 border-dashed border-gray-200 rounded-xl text-center cursor-not-allowed">
+                                                    <span className="text-[11px] text-gray-400 font-medium">Click or Drag files here to upload</span>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
-
-                                    {/* Mock Ticket Price Box if payment active */}
-                                    {metadata.requires_payment && (
-                                        <div className="bg-ighub-purple text-white p-5 rounded-2xl relative overflow-hidden shrink-0">
-                                            <div className="relative z-10 flex justify-between items-center">
-                                                <div>
-                                                    <div className="flex items-center gap-1.5">
-                                                        {/* <CreditCard className="w-4 h-4 text-ighub-green" /> */}
-                                                        <span className="text-[10px] font-bold uppercase tracking-tigher text-gray-300">
-                                                            Ticket Payment Required
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-baseline gap-2 mt-1.5">
-                                                        <span className="text-xl font-bold text-white">
-                                                            ₦{(parseFloat(metadata.discount_price) || 0).toLocaleString()}
-                                                        </span>
-                                                        {parseFloat(metadata.base_price) > parseFloat(metadata.discount_price) && (
-                                                            <span className="text-xs text-gray-400 line-through">
-                                                                ₦{(parseFloat(metadata.base_price) || 0).toLocaleString()}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <span className="bg-white/15 backdrop-blur-md text-[9px] font-bold px-2 py-1 rounded-md text-ighub-green border border-white/10 uppercase">
-                                                    Secured Paystack
-                                                </span>
-                                            </div>
-                                        </div>
-                                    )}
 
                                     {/* Action Buttons Mock */}
                                     <div className="pt-4">
@@ -1013,7 +939,7 @@ export default function CreateFormPage() {
                                             disabled
                                             className="w-full bg-ighub-green text-white font-bold py-3.5 tracking-wide text-xs rounded-full cursor-not-allowed opacity-90 text-center"
                                         >
-                                            {metadata.requires_payment ? "Proceed to Payment" : "Submit Registration"}
+                                            Submit Registration
                                         </button>
                                     </div>
                                 </div>
