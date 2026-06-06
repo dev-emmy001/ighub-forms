@@ -12,11 +12,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ formId: 
             return NextResponse.json({ error: 'Form ID is required' }, { status: 400 });
         }
 
-        const { data: form, error } = await supabaseAdmin
-            .from('forms')
-            .select('*')
-            .eq('id', formId)
-            .maybeSingle();
+        // Determine if formId is a UUID or a slug
+        const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(formId);
+
+        let query = supabaseAdmin.from('forms').select('*');
+        if (isUuid) {
+            query = query.eq('id', formId);
+        } else {
+            query = query.eq('slug', formId);
+        }
+
+        const { data: form, error } = await query.maybeSingle();
 
         if (error) {
             console.error('Supabase fetch form error:', error);

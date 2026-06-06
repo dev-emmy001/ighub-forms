@@ -47,18 +47,11 @@ export async function updateSession(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     // Protect admin routes (both page routes and API routes, except webhook)
-    if (url.pathname.startsWith('/admin') || (isApiRoute && !url.pathname.startsWith('/api/paystack-webhook') && !url.pathname.startsWith('/api/submissions/'))) {
-        // Wait, should we protect the submissions api route? Yes, except when submitting via form renderer (which is POST /api/submissions).
-        // Let's be precise:
-        // /admin needs auth.
-        // /api/forms (POST, PUT, DELETE) needs auth.
-        // GET /api/forms needs auth if accessed by admin, but wait! Does the public form page fetch the form config via /api/forms?
-        // Let's check how the public page fetches the form config.
-        // Let's view app/(public)/[slug]/page.tsx or components/form-renderer.tsx to see if it calls /api/forms/[slug] or fetches it server-side.
-        // Wait, let's make middleware only protect page routes under `/admin` and specific API endpoints if needed.
-        // Let's check:
-        if (url.pathname.startsWith('/admin')) {
-            if (!user) {
+    if (url.pathname.startsWith('/admin') || (isApiRoute && !url.pathname.startsWith('/api/paystack-webhook') && !url.pathname.startsWith('/api/submissions') && !url.pathname.startsWith('/api/upload'))) {
+        if (!user) {
+            if (isApiRoute) {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            } else {
                 url.pathname = '/login';
                 url.searchParams.set('next', request.nextUrl.pathname);
                 return NextResponse.redirect(url);

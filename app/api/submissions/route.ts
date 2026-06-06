@@ -68,6 +68,11 @@ export async function POST(req: Request) {
         // 3. Send automatic email response if enabled
         if (form.send_email_response && submitterEmail && submitterEmail !== 'no-email-provided') {
             try {
+                // Dynamically resolve base URL to ensure images load correctly in emails
+                const host = req.headers.get('host') || 'localhost:3000';
+                const protocol = req.headers.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
+                const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
+
                 let messageBody = form.email_response_message || '';
 
                 // Replace general placeholders
@@ -86,7 +91,7 @@ export async function POST(req: Request) {
                 const formattedHtml = `
                     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #0c0e10; line-height: 1.6;">
                         <div style="margin-bottom: 25px; text-align: center;">
-                            <img src="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/igcolouredlogo.png" alt="Logo" style="height: 50px;" />
+                            <img src="${baseUrl}/igcolouredlogo.png" alt="Logo" style="height: 50px;" />
                         </div>
                         <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
                             ${messageBody.split('\n').map((para: string) => `<p style="margin: 0 0 16px 0;">${para}</p>`).join('')}
