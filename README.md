@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# IGHub Forms
 
-## Getting Started
+A modern, dynamic form builder and submission management platform built for Innovation Growth Hub (IGHub). It allows administrators to quickly create custom registration forms, set application deadlines with live countdown timers, and manage dynamic user submissions—all while automatically sending custom confirmation emails to applicants.
 
-First, run the development server:
+## Key Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Dynamic Form Builder**: Admins can create forms using custom JSON schemas with multiple field types (text, email, select, etc.).
+- **Submission Management**: Secure admin dashboard to view and manage user submissions and registration counts.
+- **Automated Email Confirmations**: Automatically sends personalized email responses to registrants upon successful form submission.
+- **Promoter/Affiliate Tracking**: Built-in support for tracking referrals and partner clicks via custom link parameters.
+- **Live Countdowns**: Automatically disables submissions and displays a sticky countdown timer for forms with deadlines.
+- **Robust Security**: Enforced route authentication, strict CORS policies, and automated header security (CSP, X-Frame-Options, X-Content-Type-Options) out of the box.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Framework**: [Next.js 16](https://nextjs.org) (App Router)
+- **UI/Styling**: [Tailwind CSS v4](https://tailwindcss.com), [Lucide React](https://lucide.dev)
+- **Database & Auth**: [Supabase](https://supabase.com) (PostgreSQL + Supabase SSR Authentication)
+- **Email Delivery**: [Nodemailer](https://nodemailer.com) & [Resend](https://resend.com)
+- **Language**: TypeScript
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
+## Security Notes
 
-To learn more about Next.js, take a look at the following resources:
+- **Admin Routes**: All `/admin` pages and `/api/forms` routes are strictly protected by Supabase server-side authentication.
+- **CORS**: Cross-Origin Resource Sharing is strictly limited to trusted origins (e.g., `https://ighub.ng`) via Next.js middleware headers.
+- **Data Integrity**: Uses Supabase RLS (Row Level Security) combined with secure backend API handlers utilizing the Service Role Key safely on the server side.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Internal use only for Innovation Growth Hub.
