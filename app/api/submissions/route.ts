@@ -27,6 +27,24 @@ export async function POST(req: Request) {
 
         // If email or name wasn't found directly, search using the schema labels
         const schema = form.form_schema || [];
+        
+        // 2.5 Strict Server-Side Validation: Ensure all required fields from the schema are present and not empty
+        const missingFields: string[] = [];
+        schema.forEach((field: any) => {
+            if (field.required) {
+                const val = answers[field.id];
+                if (val === undefined || val === null || (typeof val === 'string' && val.trim() === '')) {
+                    missingFields.push(field.label || field.id);
+                }
+            }
+        });
+
+        if (missingFields.length > 0) {
+            return NextResponse.json({ 
+                error: `Missing required fields: ${missingFields.join(', ')}` 
+            }, { status: 400 });
+        }
+
         schema.forEach((field: any) => {
             const labelLower = (field.label || '').toLowerCase();
             const val = answers[field.id];
