@@ -60,26 +60,31 @@ interface PartnersDashboardClientProps {
 function parseApplicantDetails(answers: Record<string, any>, schema: FormField[], submitterEmail: string) {
     let name = "";
     let email = "";
-    let bankDetails = "";
+    let bankDetailsParts: string[] = [];
 
     // 1. Try matching with form schema field labels
     schema.forEach(field => {
         const label = (field.label || "").toLowerCase();
         const value = answers[field.id];
+        
         if (value) {
-            if (label.includes("name") || label.includes("full name") || label.includes("applicant")) {
-                if (!name) name = String(value);
-            } else if (label.includes("email") || label.includes("mail")) {
+            if (label.includes("email") || label.includes("mail")) {
                 if (!email) email = String(value);
             } else if (label.includes("bank") || label.includes("account") || label.includes("payment")) {
-                if (!bankDetails) bankDetails = String(value);
+                // Collect any field related to bank/account
+                bankDetailsParts.push(`${field.label}: ${value}`);
+            } else if (label.includes("name") || label.includes("applicant")) {
+                // To avoid confusing "Account Name" with "Full Name", we check if it's not a bank field (already handled above)
+                if (!name) name = String(value);
             }
         }
     });
 
+    let bankDetails = bankDetailsParts.join(" | ");
+
     // 2. Fallbacks: Check keys directly in case fields were submitted outside of schema ids
     if (!name) {
-        const nameKey = Object.keys(answers).find(k => k.toLowerCase().includes("name") && !k.toLowerCase().includes("bank"));
+        const nameKey = Object.keys(answers).find(k => k.toLowerCase().includes("name") && !k.toLowerCase().includes("bank") && !k.toLowerCase().includes("account"));
         if (nameKey) name = String(answers[nameKey]);
     }
     if (!email) {
