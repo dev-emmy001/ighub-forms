@@ -111,7 +111,7 @@ export default function PartnersDashboardClient({
     const [submissions, setSubmissions] = useState<Submission[]>(initialSubmissions);
     const [promoters, setPromoters] = useState<PromoterItem[]>(initialPromoters);
     const [searchTerm, setSearchTerm] = useState("");
-    const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved">("all");
+    const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
     const [expandedSubId, setExpandedSubId] = useState<string | null>(null);
     const [processingId, setProcessingId] = useState<string | null>(null);
 
@@ -136,7 +136,8 @@ export default function PartnersDashboardClient({
     // Calculate Statistics
     const totalCount = submissions.length;
     const approvedCount = submissions.filter(s => s.payment_status === "approved_partner").length;
-    const pendingCount = totalCount - approvedCount;
+    const rejectedCount = submissions.filter(s => s.payment_status === "rejected").length;
+    const pendingCount = totalCount - approvedCount - rejectedCount;
 
     // Handle Campaign Dropdown Selection
     const handleCampaignChange = (submissionId: string, campaignId: string) => {
@@ -213,6 +214,50 @@ export default function PartnersDashboardClient({
         }
     };
 
+    // Handle Application Rejection Client side
+    const handleRejectPartner = async (submissionId: string, name: string) => {
+        setProcessingId(submissionId);
+        setAlertState({ type: null, message: null });
+
+        try {
+            const response = await fetch("/api/partners/reject", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    submissionId
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Failed to reject partner");
+            }
+
+            // Update local state to reflect the rejection immediately
+            setSubmissions(prev =>
+                prev.map(sub =>
+                    sub.id === submissionId
+                        ? { ...sub, payment_status: "rejected" }
+                        : sub
+                )
+            );
+
+            triggerAlert(
+                "success",
+                `Successfully rejected application for ${name}`
+            );
+
+        } catch (err: any) {
+            console.error(err);
+            triggerAlert("error", err.message || "An unexpected error occurred during partner rejection.");
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
     // Helper to get questions map for expanded answers display
     const getFieldLabel = (fieldId: string) => {
         const field = formSchema.find(f => f.id === fieldId);
@@ -232,15 +277,17 @@ export default function PartnersDashboardClient({
 
         // Tab status filter
         const isApproved = sub.payment_status === "approved_partner";
+        const isRejected = sub.payment_status === "rejected";
         if (statusFilter === "approved") return matchesSearch && isApproved;
-        if (statusFilter === "pending") return matchesSearch && !isApproved;
+        if (statusFilter === "rejected") return matchesSearch && isRejected;
+        if (statusFilter === "pending") return matchesSearch && !isApproved && !isRejected;
         return matchesSearch;
     });
 
     return (
         <div className="space-y-8 animate-in fade-in duration-300">
             {/* Top Analytics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {/* Total Applications Card */}
                 <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-3xs flex items-center gap-5 transition-all hover:shadow-2xs">
                     <div className="p-4 bg-ighub-light rounded-2xl text-ighub-purple">
@@ -271,6 +318,17 @@ export default function PartnersDashboardClient({
                     <div>
                         <span className="text-xs text-gray-400">Approved Partners</span>
                         <h3 className="text-3xl text-ighub-black mt-1">{approvedCount}</h3>
+                    </div>
+                </div>
+
+                {/* Rejected Card */}
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-3xs flex items-center gap-5 transition-all hover:shadow-2xs">
+                    <div className="p-4 bg-rose-50 rounded-2xl text-rose-500">
+                        <XCircle className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <span className="text-xs text-gray-400">Rejected</span>
+                        <h3 className="text-3xl text-ighub-black mt-1">{rejectedCount}</h3>
                     </div>
                 </div>
             </div>
@@ -320,7 +378,8 @@ export default function PartnersDashboardClient({
                     {([
                         { id: "all", label: "All Applicants" },
                         { id: "pending", label: "Pending" },
-                        { id: "approved", label: "Approved" }
+                        { id: "approved", label: "Approved" },
+                        { id: "rejected", label: "Rejected" }
                     ] as const).map(tab => (
                         <button
                             key={tab.id}
@@ -355,7 +414,7 @@ export default function PartnersDashboardClient({
                                     {/* <th className="px-6 py-4">Bank Details</th> */}
                                     <th className="px-6 py-4">Promoting Campaign</th>
                                     <th className="px-6 py-4">Status</th>
-                                    <th className="px-6 py-4 text-center">Approve</th>
+                                    <th className="px-6 py-4 text-center">Actions</th>
                                     <th className="px-6 py-4 text-right">More</th>
                                 </tr>
                             </thead>
@@ -365,100 +424,108 @@ export default function PartnersDashboardClient({
                                     const isExpanded = expandedSubId === sub.id;
                                     const isApproved = sub.payment_status === "approved_partner";
                                     const activeCampaignId = selectedCampaigns[sub.id] || defaultCampaignId;
-                                    const isRowProcessing = processingId === sub.id;
+                                     const isRowProcessing = processingId === sub.id;
+                                     const isRejected = sub.payment_status === "rejected";
 
-                                    const promoter = promoters.find(p => p.email?.toLowerCase() === parsed.email?.toLowerCase());
-                                    const assignedCampaignId = promoter ? promoter.form_id : activeCampaignId;
-                                    const assignedCampaignTitle = campaignOptions.find(c => c.id === assignedCampaignId)?.title || "Affiliate Link Assigned";
+                                     const promoter = promoters.find(p => p.email?.toLowerCase() === parsed.email?.toLowerCase());
+                                     const assignedCampaignId = promoter ? promoter.form_id : activeCampaignId;
+                                     const assignedCampaignTitle = campaignOptions.find(c => c.id === assignedCampaignId)?.title || "Affiliate Link Assigned";
 
-                                    return (
-                                        <React.Fragment key={sub.id}>
-                                            <tr className="hover:bg-gray-50/50 transition-colors">
-                                                {/* Candidate name and email */}
-                                                <td className="px-6 py-5">
-                                                    <div className="font-bold text-ighub-black">{parsed.name}</div>
-                                                    <div className="text-xs text-gray-450 font-medium mt-0.5">{parsed.email}</div>
-                                                    {isApproved && promoter && (
-                                                        <div className="text-[10px] font-bold text-ighub-purple mt-1 uppercase tracking-wide">
-                                                            Code: {promoter.code}
-                                                        </div>
-                                                    )}
-                                                </td>
+                                     return (
+                                         <React.Fragment key={sub.id}>
+                                             <tr className="hover:bg-gray-50/50 transition-colors">
+                                                 {/* Candidate name and email */}
+                                                 <td className="px-6 py-5">
+                                                     <div className="font-bold text-ighub-black">{parsed.name}</div>
+                                                     <div className="text-xs text-gray-450 font-medium mt-0.5">{parsed.email}</div>
+                                                     {isApproved && promoter && (
+                                                         <div className="text-[10px] font-bold text-ighub-purple mt-1 uppercase tracking-wide">
+                                                             Code: {promoter.code}
+                                                         </div>
+                                                     )}
+                                                 </td>
 
-                                                {/* Bank Account info
-                                                <td className="px-6 py-5">
-                                                    <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 bg-ighub-light px-3 py-1.5 rounded-xl border border-gray-200 max-w-[280px]">
-                                                        <Building2 className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                                        <span className="truncate" title={parsed.bankDetails}>
-                                                            {parsed.bankDetails}
-                                                        </span>
-                                                    </div>
-                                                </td> */}
+                                                 {/* Campaign selection dropdown */}
+                                                 <td className="px-6 py-5">
+                                                     {isApproved ? (
+                                                         <span className="text-xs font-semibold text-gray-600 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100" title={assignedCampaignTitle}>
+                                                             {assignedCampaignTitle}
+                                                         </span>
+                                                     ) : isRejected ? (
+                                                         <span className="text-xs text-gray-400">Not Applicable</span>
+                                                     ) : (
+                                                         <div className="relative max-w-[220px]">
+                                                             <select
+                                                                 value={activeCampaignId}
+                                                                 onChange={(e) => handleCampaignChange(sub.id, e.target.value)}
+                                                                 disabled={isRowProcessing}
+                                                                 className="w-full pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-ighub-green text-xs font-semibold appearance-none cursor-pointer disabled:opacity-50"
+                                                             >
+                                                                 {campaignOptions.length === 0 ? (
+                                                                     <option value="">No Active Campaigns</option>
+                                                                 ) : (
+                                                                     campaignOptions.map(camp => (
+                                                                         <option key={camp.id} value={camp.id}>
+                                                                             {camp.title}
+                                                                         </option>
+                                                                     ))
+                                                                 )}
+                                                             </select>
+                                                             <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                                         </div>
+                                                     )}
+                                                 </td>
 
-                                                {/* Campaign selection dropdown */}
-                                                <td className="px-6 py-5">
-                                                    {isApproved ? (
-                                                        <span className="text-xs font-semibold text-gray-600 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100" title={assignedCampaignTitle}>
-                                                            {assignedCampaignTitle}
-                                                        </span>
-                                                    ) : (
-                                                        <div className="relative max-w-[220px]">
-                                                            <select
-                                                                value={activeCampaignId}
-                                                                onChange={(e) => handleCampaignChange(sub.id, e.target.value)}
-                                                                disabled={isApproved || isRowProcessing}
-                                                                className="w-full pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-ighub-green text-xs font-semibold appearance-none cursor-pointer disabled:opacity-50"
-                                                            >
-                                                                {campaignOptions.length === 0 ? (
-                                                                    <option value="">No Active Campaigns</option>
-                                                                ) : (
-                                                                    campaignOptions.map(camp => (
-                                                                        <option key={camp.id} value={camp.id}>
-                                                                            {camp.title}
-                                                                        </option>
-                                                                    ))
-                                                                )}
-                                                            </select>
-                                                            <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                                                        </div>
-                                                    )}
-                                                </td>
+                                                 {/* Status Badge */}
+                                                 <td className="px-6 py-5">
+                                                     <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tigher ${
+                                                         isApproved
+                                                         ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                                         : isRejected
+                                                         ? "bg-rose-50 text-rose-700 border border-rose-100"
+                                                         : "bg-amber-50 text-amber-700 border border-amber-100"
+                                                         }`}>
+                                                         {isApproved ? "Approved Partner" : isRejected ? "Rejected" : "Pending Review"}
+                                                     </span>
+                                                 </td>
 
-                                                {/* Status Badge */}
-                                                <td className="px-6 py-5">
-                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tigher ${isApproved
-                                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                                        : "bg-amber-50 text-amber-700 border border-amber-100"
-                                                        }`}>
-                                                        {isApproved ? "Approved Partner" : "Pending Review"}
-                                                    </span>
-                                                </td>
-
-                                                {/* Action approve button */}
-                                                <td className="px-6 py-5 text-center">
-                                                    {isApproved ? (
-                                                        <div className="inline-flex items-center gap-1 text-ighub-green font-bold text-xs bg-emerald-50/50 p-2 px-3.5 rounded-full border border-emerald-100">
-                                                            <CheckCircle2 className="w-4 h-4" />
-                                                            Approved
-                                                        </div>
-                                                    ) : (
-                                                        <Button
-                                                            variant="primary"
-                                                            onClick={() => handleApprovePartner(sub.id, parsed.name, parsed.email, parsed.bankDetails)}
-                                                            disabled={isRowProcessing || campaignOptions.length === 0}
-                                                            className="text-xs py-2 px-4 rounded-full font-bold shadow-3xs cursor-pointer select-none"
-                                                        >
-                                                            {isRowProcessing ? (
-                                                                <>
-                                                                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-                                                                    Processing...
-                                                                </>
-                                                            ) : (
-                                                                "Approve Agent"
-                                                            )}
-                                                        </Button>
-                                                    )}
-                                                </td>
+                                                 {/* Actions buttons */}
+                                                 <td className="px-6 py-5 text-center">
+                                                     {isApproved ? (
+                                                         <div className="inline-flex items-center gap-1 text-ighub-green font-bold text-xs bg-emerald-50/50 p-2 px-3.5 rounded-full border border-emerald-100">
+                                                             <CheckCircle2 className="w-4 h-4" />
+                                                             Approved
+                                                         </div>
+                                                     ) : isRejected ? (
+                                                         <div className="inline-flex items-center gap-1 text-rose-600 font-bold text-xs bg-rose-50/50 p-2 px-3.5 rounded-full border border-rose-100">
+                                                             <XCircle className="w-4 h-4" />
+                                                             Rejected
+                                                         </div>
+                                                     ) : (
+                                                         <div className="flex items-center justify-center gap-2">
+                                                             <Button
+                                                                 variant="primary"
+                                                                 onClick={() => handleApprovePartner(sub.id, parsed.name, parsed.email, parsed.bankDetails)}
+                                                                 disabled={isRowProcessing || campaignOptions.length === 0}
+                                                                 className="text-[11px] py-1.5 px-3 rounded-full font-bold shadow-3xs cursor-pointer select-none"
+                                                             >
+                                                                 {isRowProcessing && processingId === sub.id ? (
+                                                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                                 ) : (
+                                                                     "Approve"
+                                                                 )}
+                                                             </Button>
+                                                             <Button
+                                                                 variant="outline"
+                                                                 onClick={() => handleRejectPartner(sub.id, parsed.name)}
+                                                                 disabled={isRowProcessing}
+                                                                 className="text-[11px] py-1.5 px-3 rounded-full font-bold text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 cursor-pointer select-none"
+                                                             >
+                                                                 Reject
+                                                             </Button>
+                                                         </div>
+                                                     )}
+                                                 </td>
 
                                                 {/* Expanded Details trigger */}
                                                 <td className="px-6 py-5 text-right">
