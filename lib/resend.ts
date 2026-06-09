@@ -45,6 +45,9 @@ export async function sendEmail({
             return { success: true, provider: 'smtp', messageId: info.messageId };
         } catch (error) {
             console.error('SMTP Email sending failed, attempting fallback if available. Error:', error);
+            if (!resendClient) {
+                return { success: false, error: String(error) };
+            }
         }
     }
 
@@ -61,17 +64,17 @@ export async function sendEmail({
 
             if (error) {
                 console.error('Resend Email sending failed:', error);
-                return { success: false, provider: 'resend', error };
+                return { success: false, provider: 'resend', error: error.message || String(error) };
             }
 
             console.log('Email sent successfully via Resend:', data?.id);
             return { success: true, provider: 'resend', id: data?.id };
         } catch (error) {
             console.error('Resend exception:', error);
-            return { success: false, error };
+            return { success: false, error: String(error) };
         }
     }
 
     console.warn(`No email provider configured. E-mail to "${to}" was not sent. Provide SMTP credentials or a RESEND_API_KEY in .env.`);
-    return { success: false, error: 'Email service not configured' };
+    return { success: false, error: 'Email service not configured. Check your .env file.' };
 }
