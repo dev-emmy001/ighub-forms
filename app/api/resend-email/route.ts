@@ -81,7 +81,7 @@ export async function POST(req: Request) {
                     <img src="${baseUrl}/igcolouredlogo.png" alt="Logo" style="height: 50px;" />
                 </div>
                 <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
-                    ${messageBody.split('\\n').map((para: string) => `<p style="margin: 0 0 16px 0;">${para}</p>`).join('')}
+                    ${messageBody.split('\n').map((para: string) => `<p style="margin: 0 0 16px 0;">${para}</p>`).join('')}
                 </div>
                 <div style="margin-top: 25px; text-align: center; font-size: 11px; color: #a0aec0;">
                     Sent automatically by Innovation Growth Hub Forms.

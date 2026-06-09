@@ -135,12 +135,12 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to resend');
-            
+
             // Optimistically update local state
-            setSubmissions(prev => prev.map(s => 
-                s.id === submissionId 
-                ? { ...s, email_status: 'sent', email_error: null, submitter_email: newEmailDraft || currentEmail } 
-                : s
+            setSubmissions(prev => prev.map(s =>
+                s.id === submissionId
+                    ? { ...s, email_status: 'sent', email_error: null, submitter_email: newEmailDraft || currentEmail }
+                    : s
             ));
             setEditingEmailId(null);
             setNewEmailDraft("");
@@ -1221,10 +1221,10 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                         <td className="px-6 py-4 font-semibold text-ighub-black">
                                                             {editingEmailId === sub.id ? (
                                                                 <div className="flex gap-2">
-                                                                    <input 
-                                                                        type="text" 
-                                                                        value={newEmailDraft} 
-                                                                        onChange={(e) => setNewEmailDraft(e.target.value)} 
+                                                                    <input
+                                                                        type="text"
+                                                                        value={newEmailDraft}
+                                                                        onChange={(e) => setNewEmailDraft(e.target.value)}
                                                                         className="px-2 py-1 text-xs border rounded-md"
                                                                     />
                                                                     <button onClick={() => setEditingEmailId(null)} className="text-xs text-gray-500">Cancel</button>
@@ -1234,17 +1234,17 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                                     <span>{sub.submitter_email}</span>
                                                                     {sub.email_status === 'failed' && (
                                                                         <div className="flex items-center gap-2">
-                                                                            <span className="text-[10px] bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded border border-rose-200">Email Failed</span>
+                                                                            <span className="text-[10px] bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded border">Email Failed</span>
                                                                             <button onClick={() => { setEditingEmailId(sub.id); setNewEmailDraft(sub.submitter_email); }} className="text-[10px] text-ighub-purple hover:underline">Edit & Resend</button>
                                                                         </div>
                                                                     )}
                                                                     {sub.email_status === 'sent' && (
-                                                                        <span className="text-[10px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-200 w-fit">Email Sent ✅</span>
+                                                                        <span className="text-[10px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded border  w-fit">Email Sent</span>
                                                                     )}
                                                                 </div>
                                                             )}
                                                             {editingEmailId === sub.id && (
-                                                                <button 
+                                                                <button
                                                                     onClick={() => handleResendEmail(sub.id, sub.submitter_email)}
                                                                     disabled={resendingEmailId === sub.id}
                                                                     className="mt-1 text-[10px] bg-ighub-purple text-white px-2 py-1 rounded hover:bg-opacity-90 disabled:opacity-50"
