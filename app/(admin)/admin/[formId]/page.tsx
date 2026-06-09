@@ -58,6 +58,8 @@ interface Submission {
     staff_ref: string | null;
     payment_status: string;
     created_at: string;
+    email_status?: 'sent' | 'failed' | 'pending' | null;
+    email_error?: string | null;
 }
 
 interface Promoter {
@@ -115,6 +117,42 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
     const [copiedPromoterId, setCopiedPromoterId] = useState<string | null>(null);
 
     // 5. Global loading & status
+    const [isExporting, setIsExporting] = useState(false);
+    const [resendingEmailId, setResendingEmailId] = useState<string | null>(null);
+    const [editingEmailId, setEditingEmailId] = useState<string | null>(null);
+    const [newEmailDraft, setNewEmailDraft] = useState<string>("");
+
+    const handleResendEmail = async (submissionId: string, currentEmail: string) => {
+        setResendingEmailId(submissionId);
+        try {
+            const res = await fetch('/api/resend-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    submissionId,
+                    newEmail: newEmailDraft || currentEmail
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to resend');
+            
+            // Optimistically update local state
+            setSubmissions(prev => prev.map(s => 
+                s.id === submissionId 
+                ? { ...s, email_status: 'sent', email_error: null, submitter_email: newEmailDraft || currentEmail } 
+                : s
+            ));
+            setEditingEmailId(null);
+            setNewEmailDraft("");
+            alert("Email resent successfully!");
+        } catch (err: any) {
+            console.error(err);
+            alert("Error resending email: " + err.message);
+        } finally {
+            setResendingEmailId(null);
+        }
+    };
+
     const [isLoading, setIsLoading] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
     const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
@@ -1181,7 +1219,39 @@ export default function EditFormPage({ params: paramsPromise }: { params: Promis
                                                 <React.Fragment key={sub.id}>
                                                     <tr className="hover:bg-gray-50 transition-colors">
                                                         <td className="px-6 py-4 font-semibold text-ighub-black">
-                                                            {sub.submitter_email}
+                                                            {editingEmailId === sub.id ? (
+                                                                <div className="flex gap-2">
+                                                                    <input 
+                                                                        type="text" 
+                                                                        value={newEmailDraft} 
+                                                                        onChange={(e) => setNewEmailDraft(e.target.value)} 
+                                                                        className="px-2 py-1 text-xs border rounded-md"
+                                                                    />
+                                                                    <button onClick={() => setEditingEmailId(null)} className="text-xs text-gray-500">Cancel</button>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span>{sub.submitter_email}</span>
+                                                                    {sub.email_status === 'failed' && (
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-[10px] bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded border border-rose-200">Email Failed</span>
+                                                                            <button onClick={() => { setEditingEmailId(sub.id); setNewEmailDraft(sub.submitter_email); }} className="text-[10px] text-ighub-purple hover:underline">Edit & Resend</button>
+                                                                        </div>
+                                                                    )}
+                                                                    {sub.email_status === 'sent' && (
+                                                                        <span className="text-[10px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-200 w-fit">Email Sent ✅</span>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            {editingEmailId === sub.id && (
+                                                                <button 
+                                                                    onClick={() => handleResendEmail(sub.id, sub.submitter_email)}
+                                                                    disabled={resendingEmailId === sub.id}
+                                                                    className="mt-1 text-[10px] bg-ighub-purple text-white px-2 py-1 rounded hover:bg-opacity-90 disabled:opacity-50"
+                                                                >
+                                                                    {resendingEmailId === sub.id ? 'Sending...' : 'Confirm Resend'}
+                                                                </button>
+                                                            )}
                                                         </td>
                                                         <td className="px-6 py-4 text-gray-500 text-xs flex items-center gap-1.5 mt-1 border-0">
                                                             <Calendar className="w-3.5 h-3.5" />

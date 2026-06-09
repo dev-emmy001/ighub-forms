@@ -120,17 +120,41 @@ export async function POST(req: Request) {
                     </div>
                 `;
 
-                // Dispatch email asynchronously
-                sendEmail({
+                // Dispatch email and track status
+                const emailResult = await sendEmail({
                     to: submitterEmail.trim(),
                     subject: `Response: ${form.title}`,
                     html: formattedHtml
-                }).catch((emailErr) => {
-                    console.error('Async email delivery failed:', emailErr);
                 });
 
+                if (!emailResult.success) {
+                    console.error('Email delivery failed:', emailResult.error);
+                    await supabaseAdmin
+                        .from('submissions')
+                        .update({
+                            email_status: 'failed',
+                            email_error: String(emailResult.error || 'Unknown error')
+                        })
+                        .eq('id', data.id);
+                } else {
+                    await supabaseAdmin
+                        .from('submissions')
+                        .update({
+                            email_status: 'sent',
+                            email_error: null
+                        })
+                        .eq('id', data.id);
+                }
+
             } catch (emailErr) {
-                console.error('Error formatting email response:', emailErr);
+                console.error('Error formatting/sending email response:', emailErr);
+                await supabaseAdmin
+                    .from('submissions')
+                    .update({
+                        email_status: 'failed',
+                        email_error: String(emailErr)
+                    })
+                    .eq('id', data.id);
             }
         }
 
