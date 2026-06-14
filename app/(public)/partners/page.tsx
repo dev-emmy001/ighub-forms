@@ -25,7 +25,6 @@ interface PromoterStats {
         name: string;
         code: string;
         email: string;
-        bankDetails: string;
         clicks: number;
         createdAt: string;
     };

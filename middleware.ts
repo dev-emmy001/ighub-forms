@@ -47,7 +47,7 @@ export async function updateSession(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     // Protect admin routes (both page routes and API routes, except webhook)
-    if (url.pathname.startsWith('/admin') || (isApiRoute && !url.pathname.startsWith('/api/paystack-webhook') && !url.pathname.startsWith('/api/submissions') && !url.pathname.startsWith('/api/upload'))) {
+    if (url.pathname.startsWith('/admin') || (isApiRoute && !url.pathname.startsWith('/api/paystack-webhook') && !url.pathname.startsWith('/api/submissions') && !url.pathname.startsWith('/api/upload') && !url.pathname.startsWith('/api/promoters/stats'))) {
         if (!user) {
             if (isApiRoute) {
                 return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

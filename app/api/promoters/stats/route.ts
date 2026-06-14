@@ -77,7 +77,6 @@ export async function GET(req: Request) {
                 name: promoter.name,
                 code: cleanCode,
                 email: promoter.email,
-                bankDetails: promoter.bank_details || 'No bank details provided',
                 clicks: promoter.clicks || 0,
                 createdAt: promoter.created_at
             },
